@@ -6,9 +6,7 @@ param planSkuName string = 'P1v2'
 @allowed(['Premium_LRS', 'Premium_ZRS', 'Standard_GRS', 'Standard_GZRS', 'Standard_LRS', 'Standard_RAGRS', 'Standard_RAGZRS', 'Standard_ZRS'])
 param storageSkuName string = 'Standard_LRS'
 
-param resourceGroupId string = resourceGroup().id
-param resourceGroupLocation string = resourceGroup().location
-
+@allowed(['Central US', 'East US 2', 'East Asia', 'West Europe', 'West US 2'])
 param staticAppLocation string = 'East Asia'
 param appLocation string = 'nuxt-app'
 param appArtifactLocation string = '.output/public'
@@ -17,6 +15,9 @@ param skipGithubActionWorkflowGeneration bool = false
 param githubRepositoryBranch string = 'main'
 param githubRepositoryUrl string
 param githubAccessToken string
+
+var resourceGroupId = resourceGroup().id
+var resourceGroupLocation = resourceGroup().location
 
 resource storageForFunc 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   name: 'st${sys.uniqueString(resourceGroupId)}'

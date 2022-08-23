@@ -11,10 +11,6 @@
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fquickstart-templates%2FAzure-for-startups%2Fmain%2F1_web-application%2F1-1_spa-on-serverless%2Fazuredeploy.json)
 
 
-### for dev
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fquickstart-templates%2FAzure-for-startups%2F1-1_spa-on-sreverless%2F1_web-application%2F1-1_spa-on-serverless%2Fazuredeploy.json)
-
-
 ## デバッグ
 
 ### Azure CLI によるデプロイ
