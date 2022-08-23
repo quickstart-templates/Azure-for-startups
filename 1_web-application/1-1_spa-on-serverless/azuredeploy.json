@@ -1,0 +1,202 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.9.1.41621",
+      "templateHash": "5148438385153072094"
+    }
+  },
+  "parameters": {
+    "identifier": {
+      "type": "string"
+    },
+    "planSkuName": {
+      "type": "string",
+      "defaultValue": "P1v2",
+      "allowedValues": [
+        "Y1",
+        "P1v2",
+        "P2v2",
+        "P3v2",
+        "P1v3",
+        "P2v3",
+        "P3v3"
+      ]
+    },
+    "storageSkuName": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Premium_LRS",
+        "Premium_ZRS",
+        "Standard_GRS",
+        "Standard_GZRS",
+        "Standard_LRS",
+        "Standard_RAGRS",
+        "Standard_RAGZRS",
+        "Standard_ZRS"
+      ]
+    },
+    "resourceGroupId": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().id]"
+    },
+    "resourceGroupLocation": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "staticAppLocation": {
+      "type": "string",
+      "defaultValue": "East Asia"
+    },
+    "appLocation": {
+      "type": "string",
+      "defaultValue": "nuxt-app"
+    },
+    "appArtifactLocation": {
+      "type": "string",
+      "defaultValue": ".output/public"
+    },
+    "appBuildCommand": {
+      "type": "string",
+      "defaultValue": "npm run generate"
+    },
+    "skipGithubActionWorkflowGeneration": {
+      "type": "bool",
+      "defaultValue": false
+    },
+    "githubRepositoryBranch": {
+      "type": "string",
+      "defaultValue": "main"
+    },
+    "githubRepositoryUrl": {
+      "type": "string"
+    },
+    "githubAccessToken": {
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/staticSites/linkedBackends",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}/{1}', format('stapp-{0}', parameters('identifier')), 'backend')]",
+      "properties": {
+        "region": "[reference(resourceId('Microsoft.Web/sites', format('func-{0}', parameters('identifier'))), '2022-03-01', 'full').location]",
+        "backendResourceId": "[resourceId('Microsoft.Web/sites', format('func-{0}', parameters('identifier')))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', format('func-{0}', parameters('identifier')))]",
+        "[resourceId('Microsoft.Web/staticSites', format('stapp-{0}', parameters('identifier')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-09-01",
+      "name": "[format('st{0}', uniqueString(parameters('resourceGroupId')))]",
+      "location": "[parameters('resourceGroupLocation')]",
+      "kind": "StorageV2",
+      "sku": {
+        "name": "[parameters('storageSkuName')]"
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2020-12-01",
+      "name": "[format('plan-{0}', parameters('identifier'))]",
+      "location": "[parameters('resourceGroupLocation')]",
+      "sku": {
+        "name": "[parameters('planSkuName')]",
+        "capacity": 1
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2022-03-01",
+      "name": "[format('func-{0}', parameters('identifier'))]",
+      "location": "[parameters('resourceGroupLocation')]",
+      "kind": "functionapp",
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', parameters('identifier')))]",
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "AzureWebJobsDashboard",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', format('st{0}', uniqueString(parameters('resourceGroupId'))), listKeys(resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(parameters('resourceGroupId')))), '2021-09-01').keys[0].value)]"
+            },
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', format('st{0}', uniqueString(parameters('resourceGroupId'))), listKeys(resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(parameters('resourceGroupId')))), '2021-09-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', format('st{0}', uniqueString(parameters('resourceGroupId'))), listKeys(resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(parameters('resourceGroupId')))), '2021-09-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTSHARE",
+              "value": "[toLower(format('func-{0}', parameters('identifier')))]"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~4"
+            },
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId('Microsoft.Insights/components', format('appi-{0}', parameters('identifier'))), '2020-02-02').InstrumentationKey]"
+            },
+            {
+              "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+              "value": "[reference(resourceId('Microsoft.Insights/components', format('appi-{0}', parameters('identifier'))), '2020-02-02').ConnectionString]"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "node"
+            },
+            {
+              "name": "WEBSITE_NODE_DEFAULT_VERSION",
+              "value": "~16"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/components', format('appi-{0}', parameters('identifier')))]",
+        "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', parameters('identifier')))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(parameters('resourceGroupId'))))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02",
+      "name": "[format('appi-{0}', parameters('identifier'))]",
+      "location": "[parameters('resourceGroupLocation')]",
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web"
+      }
+    },
+    {
+      "type": "Microsoft.Web/staticSites",
+      "apiVersion": "2021-03-01",
+      "name": "[format('stapp-{0}', parameters('identifier'))]",
+      "location": "[parameters('staticAppLocation')]",
+      "sku": {
+        "name": "Standard",
+        "tier": "Standard"
+      },
+      "properties": {
+        "repositoryUrl": "[parameters('githubRepositoryUrl')]",
+        "repositoryToken": "[parameters('githubAccessToken')]",
+        "branch": "[parameters('githubRepositoryBranch')]",
+        "buildProperties": {
+          "appLocation": "[parameters('appLocation')]",
+          "appArtifactLocation": "[parameters('appArtifactLocation')]",
+          "appBuildCommand": "[parameters('appBuildCommand')]",
+          "skipGithubActionWorkflowGeneration": "[parameters('skipGithubActionWorkflowGeneration')]"
+        }
+      }
+    }
+  ]
+}
