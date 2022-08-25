@@ -34,9 +34,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
   sku: {
     name: planSkuCode
   }
-  properties: {
-    name: 'plan-${workloadName}'
-  }
+  properties: {}
 }
 
 resource function 'Microsoft.Web/sites@2022-03-01' = {

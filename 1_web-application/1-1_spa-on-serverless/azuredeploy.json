@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.9.1.41621",
-      "templateHash": "17542754230837582206"
+      "templateHash": "16864423380719581533"
     }
   },
   "parameters": {
@@ -121,9 +121,7 @@
       "sku": {
         "name": "[parameters('planSkuCode')]"
       },
-      "properties": {
-        "name": "[format('plan-{0}', parameters('workloadName'))]"
-      }
+      "properties": {}
     },
     {
       "type": "Microsoft.Web/sites",
