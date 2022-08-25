@@ -1,10 +1,11 @@
 # 1-1	Nuxt.js で SPA をサーバーレス環境にデプロイしたい
 
-## Azure 構成
+## 構成
 
 - Azure Static Web Apps
 - Azure Functions
 
+![構成図](./docs/images/1-1_spa-on-serverless_structure.png)
 
 ## 利用方法
 
@@ -35,7 +36,13 @@
 | GitHub Repository Url | |
 | GitHub Access Token | |
 
+
+
 ※ Azure Static Web App の API におけるリージョンは、内蔵型の API を利用する際に展開する先です。本テンプレートの校正では、外部 API を利用するのでリージョンの指定は向こうとなりますが、必須項目のため設定します。
+
+### 備考
+
+- 命名規則については、[名前付け規則を定義する - Cloud Adoption Framework | Microsoft Docs](https://docs.microsoft.com/ja-jp/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming) も併せてご参考ください。
 
 ## デバッグ
 
