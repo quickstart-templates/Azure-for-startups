@@ -5,17 +5,25 @@
     "_generator": {
       "name": "bicep",
       "version": "0.9.1.41621",
-      "templateHash": "5995575230154397204"
+      "templateHash": "17542754230837582206"
     }
   },
   "parameters": {
-    "identifier": {
+    "workloadName": {
       "type": "string"
     },
-    "planSkuName": {
+    "planSkuCode": {
       "type": "string",
       "defaultValue": "P1v2",
       "allowedValues": [
+        "F1",
+        "B1",
+        "B2",
+        "B3",
+        "D1",
+        "S1",
+        "S2",
+        "S3",
         "Y1",
         "P1v2",
         "P2v2",
@@ -85,14 +93,14 @@
     {
       "type": "Microsoft.Web/staticSites/linkedBackends",
       "apiVersion": "2022-03-01",
-      "name": "[format('{0}/{1}', format('stapp-{0}', parameters('identifier')), 'backend')]",
+      "name": "[format('{0}/{1}', format('stapp-{0}', parameters('workloadName')), 'backend')]",
       "properties": {
-        "region": "[reference(resourceId('Microsoft.Web/sites', format('func-{0}', parameters('identifier'))), '2022-03-01', 'full').location]",
-        "backendResourceId": "[resourceId('Microsoft.Web/sites', format('func-{0}', parameters('identifier')))]"
+        "region": "[reference(resourceId('Microsoft.Web/sites', format('func-{0}', parameters('workloadName'))), '2022-03-01', 'full').location]",
+        "backendResourceId": "[resourceId('Microsoft.Web/sites', format('func-{0}', parameters('workloadName')))]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Web/sites', format('func-{0}', parameters('identifier')))]",
-        "[resourceId('Microsoft.Web/staticSites', format('stapp-{0}', parameters('identifier')))]"
+        "[resourceId('Microsoft.Web/sites', format('func-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Web/staticSites', format('stapp-{0}', parameters('workloadName')))]"
       ]
     },
     {
@@ -107,22 +115,24 @@
     },
     {
       "type": "Microsoft.Web/serverfarms",
-      "apiVersion": "2020-12-01",
-      "name": "[format('plan-{0}', parameters('identifier'))]",
+      "apiVersion": "2022-03-01",
+      "name": "[format('plan-{0}', parameters('workloadName'))]",
       "location": "[variables('resourceGroupLocation')]",
       "sku": {
-        "name": "[parameters('planSkuName')]",
-        "capacity": 1
+        "name": "[parameters('planSkuCode')]"
+      },
+      "properties": {
+        "name": "[format('plan-{0}', parameters('workloadName'))]"
       }
     },
     {
       "type": "Microsoft.Web/sites",
       "apiVersion": "2022-03-01",
-      "name": "[format('func-{0}', parameters('identifier'))]",
+      "name": "[format('func-{0}', parameters('workloadName'))]",
       "location": "[variables('resourceGroupLocation')]",
       "kind": "functionapp",
       "properties": {
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', parameters('identifier')))]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', parameters('workloadName')))]",
         "siteConfig": {
           "appSettings": [
             {
@@ -139,7 +149,7 @@
             },
             {
               "name": "WEBSITE_CONTENTSHARE",
-              "value": "[toLower(format('func-{0}', parameters('identifier')))]"
+              "value": "[toLower(format('func-{0}', parameters('workloadName')))]"
             },
             {
               "name": "FUNCTIONS_EXTENSION_VERSION",
@@ -147,11 +157,11 @@
             },
             {
               "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
-              "value": "[reference(resourceId('Microsoft.Insights/components', format('appi-{0}', parameters('identifier'))), '2020-02-02').InstrumentationKey]"
+              "value": "[reference(resourceId('Microsoft.Insights/components', format('appi-{0}', parameters('workloadName'))), '2020-02-02').InstrumentationKey]"
             },
             {
               "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
-              "value": "[reference(resourceId('Microsoft.Insights/components', format('appi-{0}', parameters('identifier'))), '2020-02-02').ConnectionString]"
+              "value": "[reference(resourceId('Microsoft.Insights/components', format('appi-{0}', parameters('workloadName'))), '2020-02-02').ConnectionString]"
             },
             {
               "name": "FUNCTIONS_WORKER_RUNTIME",
@@ -165,15 +175,15 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Insights/components', format('appi-{0}', parameters('identifier')))]",
-        "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', parameters('identifier')))]",
+        "[resourceId('Microsoft.Insights/components', format('appi-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', parameters('workloadName')))]",
         "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(variables('resourceGroupId'))))]"
       ]
     },
     {
       "type": "Microsoft.Insights/components",
       "apiVersion": "2020-02-02",
-      "name": "[format('appi-{0}', parameters('identifier'))]",
+      "name": "[format('appi-{0}', parameters('workloadName'))]",
       "location": "[variables('resourceGroupLocation')]",
       "kind": "web",
       "properties": {
@@ -183,7 +193,7 @@
     {
       "type": "Microsoft.Web/staticSites",
       "apiVersion": "2021-03-01",
-      "name": "[format('stapp-{0}', parameters('identifier'))]",
+      "name": "[format('stapp-{0}', parameters('workloadName'))]",
       "location": "[parameters('staticAppLocation')]",
       "sku": {
         "name": "Standard",

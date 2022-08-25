@@ -1,7 +1,7 @@
-param identifier string
+param workloadName string
 
-@allowed(['Y1', 'P1v2', 'P2v2', 'P3v2', 'P1v3', 'P2v3', 'P3v3'])
-param planSkuName string = 'P1v2'
+@allowed(['F1', 'B1', 'B2', 'B3', 'D1', 'S1', 'S2', 'S3', 'Y1', 'P1v2', 'P2v2', 'P3v2', 'P1v3', 'P2v3', 'P3v3'])
+param planSkuCode string = 'P1v2'
 
 @allowed(['Premium_LRS', 'Premium_ZRS', 'Standard_GRS', 'Standard_GZRS', 'Standard_LRS', 'Standard_RAGRS', 'Standard_RAGZRS', 'Standard_ZRS'])
 param storageSkuName string = 'Standard_LRS'
@@ -28,17 +28,19 @@ resource storageForFunc 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   }
 }
 
-resource appServicePlan 'Microsoft.Web/serverfarms@2020-12-01' = {
-  name: 'plan-${identifier}'
+resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
+  name: 'plan-${workloadName}'
   location: resourceGroupLocation
   sku: {
-    name: planSkuName
-    capacity: 1
+    name: planSkuCode
+  }
+  properties: {
+    name: 'plan-${workloadName}'
   }
 }
 
 resource function 'Microsoft.Web/sites@2022-03-01' = {
-  name: 'func-${identifier}'
+  name: 'func-${workloadName}'
   location: resourceGroupLocation
   kind: 'functionapp'
   properties: {
@@ -59,7 +61,7 @@ resource function 'Microsoft.Web/sites@2022-03-01' = {
         }
         {
           name: 'WEBSITE_CONTENTSHARE'
-          value: toLower('func-${identifier}')
+          value: toLower('func-${workloadName}')
         }
         {
           name: 'FUNCTIONS_EXTENSION_VERSION'
@@ -87,7 +89,7 @@ resource function 'Microsoft.Web/sites@2022-03-01' = {
 }
 
 resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
-  name: 'appi-${identifier}'
+  name: 'appi-${workloadName}'
   location: resourceGroupLocation
   kind: 'web'
   properties: {
@@ -96,7 +98,7 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
 }
 
 resource staticWebApp 'Microsoft.Web/staticSites@2021-03-01' = {
-  name: 'stapp-${identifier}'
+  name: 'stapp-${workloadName}'
   location: staticAppLocation
   sku: {
     name: 'Standard'
