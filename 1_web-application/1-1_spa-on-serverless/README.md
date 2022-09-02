@@ -29,7 +29,7 @@ Nuxt.js を使用してシングルページアプリケーション (SPA) を�
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fquickstart-templates%2FAzure-for-startups%2Fmain%2F1_web-application%2F1-1_spa-on-serverless%2Fazuredeploy.json)
 
 
-下記の情報を入力して「Review + create」ボタンを選択し、パラメータの検証が正常に完了したら、「Create」ボタンを選択してデプロイを実行します。
+各入力欄に適宜入力し、「Review + create」ボタンを選択します。パラメータの検証が正常に完了したら、「Create」ボタンを選択してデプロイを実行します。
 
 <img src="./docs/images/deploy_001.png" width="80%" alt="デプロイのパラメータ入力画面">
 
