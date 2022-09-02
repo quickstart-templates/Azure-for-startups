@@ -24,7 +24,7 @@
 | Resource Group | 利用する既存のグループを選択、または「Create new」から新規作成 |
 | Instance details | |
 | Region | 利用するリージョンを選択 |
-| Identifier | リソース名に付与する識別用の文字列を入力 |
+| workloadName | リソース名に付与する識別用の文字列（プロジェクト名など）を入力 |
 | Plan Sku Name | Azure App Service Plann の SKU を選択 |
 | Storage Sku Name | Azure Functions に利用する Azure Storage Account の SKU を選択 |
 | Static App Location | Azure Static Web App の API におけるリージョン（※）を選択 |
@@ -36,7 +36,11 @@
 | GitHub Repository Url | |
 | GitHub Access Token | |
 
+### Azure Static Web App の設定値について
 
+ビルド構成については、こちらをご参照ください。
+
+- [Azure Static Web Apps のビルド構成 | Microsoft Docs](https://docs.microsoft.com/ja-jp/azure/static-web-apps/build-configuration)
 
 ※ Azure Static Web App の API におけるリージョンは、内蔵型の API を利用する際に展開する先です。本テンプレートの校正では、外部 API を利用するのでリージョンの指定は向こうとなりますが、必須項目のため設定します。
 
@@ -49,8 +53,8 @@
 ### Azure CLI によるデプロイ
 
 ```bash
-IDENTIFIER="{string to identify your resources}"
-RESOURCE_GROUP_NAME="rg-${IDENTIFIER}"
+WORKLOAD_NAME="{string to identify your resources}"
+RESOURCE_GROUP_NAME="rg-${WORKLOAD_NAME}"
 LOCATION="{Location}"
 az group create --name ${RESOURCE_GROUP_NAME} --location ${LOCATION}
 az deployment group create --resource-group ${RESOURCE_GROUP_NAME} --template-file bicep/azuredeploy.bicep

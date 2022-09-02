@@ -1,20 +1,38 @@
+@description('リソース名に付与する識別用の文字列（プロジェクト名など）を入力してください')
 param workloadName string
 
+@description('Azure Function のプランを選択してください')
 @allowed(['F1', 'B1', 'B2', 'B3', 'D1', 'S1', 'S2', 'S3', 'Y1', 'P1v2', 'P2v2', 'P3v2', 'P1v3', 'P2v3', 'P3v3'])
-param planSkuCode string = 'P1v2'
+param functionPlanSkuCode string = 'P1v2'
 
+@description('Azure Storage Account の SKU を選択してください')
 @allowed(['Premium_LRS', 'Premium_ZRS', 'Standard_GRS', 'Standard_GZRS', 'Standard_LRS', 'Standard_RAGRS', 'Standard_RAGZRS', 'Standard_ZRS'])
-param storageSkuName string = 'Standard_LRS'
+param storageAccountSkuName string = 'Standard_LRS'
 
+@description('Azure Static Web App の API におけるリージョンを選択してください（実際には Azure Function をリンクするので内蔵APIは使用しませんが、必須項目のため）')
 @allowed(['Central US', 'East US 2', 'East Asia', 'West Europe', 'West US 2'])
 param staticAppLocation string = 'East Asia'
-param appLocation string = 'nuxt-app'
-param appArtifactLocation string = '.output/public'
-param appBuildCommand string = 'npm run generate'
-param skipGithubActionWorkflowGeneration bool = false
-param githubRepositoryBranch string = 'main'
-param githubRepositoryUrl string
-param githubAccessToken string
+
+@description('Azure Static Web App のビルド構成の app_location を指定してください')
+param staticAppConfigAppLocation string = 'nuxt-app'
+
+@description('Azure Static Web App のビルド構成の output_location を指定してください')
+param staticAppConfigAppOutputLocation string = '.output/public'
+
+@description('Azure Static Web App のビルド構成の app_build_command を指定してください')
+param staticAppConfigAppBuildCommand string = 'npm run generate'
+
+@description('Azure Static Web App にデプロイするコードを含む GitHub リポジトリのURLを指定してください')
+param staticAppGithubRepositoryUrl string
+
+@description('GitHub personal access token を入力してください（必要なスコープ repo, workflow, write:packages）')
+param staticAppGithubAccessToken string
+
+@description('Azure Static Web App にデプロイするブランチを入力してください')
+param staticAppGithubRepositoryBranch string = 'main'
+
+@description('指定したソースリポジトリに GitHub Actions のワークフローファイルを生成するかどうかを選択してください')
+param staticAppSkipGithubActionWorkflowGeneration bool = false
 
 var resourceGroupId = resourceGroup().id
 var resourceGroupLocation = resourceGroup().location
@@ -24,7 +42,7 @@ resource storageForFunc 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   location: resourceGroupLocation
   kind: 'StorageV2'
   sku: {
-    name: storageSkuName
+    name: storageAccountSkuName
   }
 }
 
@@ -32,7 +50,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
   name: 'plan-${workloadName}'
   location: resourceGroupLocation
   sku: {
-    name: planSkuCode
+    name: functionPlanSkuCode
   }
   properties: {}
 }
@@ -103,14 +121,14 @@ resource staticWebApp 'Microsoft.Web/staticSites@2021-03-01' = {
     tier: 'Standard'
   }
   properties: {
-    repositoryUrl: githubRepositoryUrl
-    repositoryToken: githubAccessToken
-    branch: githubRepositoryBranch
+    repositoryUrl: staticAppGithubRepositoryUrl
+    repositoryToken: staticAppGithubAccessToken
+    branch: staticAppGithubRepositoryBranch
     buildProperties: {
-      appLocation: appLocation
-      appArtifactLocation: appArtifactLocation
-      appBuildCommand: appBuildCommand
-      skipGithubActionWorkflowGeneration: skipGithubActionWorkflowGeneration
+      appLocation: staticAppConfigAppLocation
+      outputLocation: staticAppConfigAppOutputLocation
+      appBuildCommand: staticAppConfigAppBuildCommand
+      skipGithubActionWorkflowGeneration: staticAppSkipGithubActionWorkflowGeneration
     }
   }
 

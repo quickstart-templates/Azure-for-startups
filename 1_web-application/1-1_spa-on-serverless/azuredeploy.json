@@ -5,14 +5,17 @@
     "_generator": {
       "name": "bicep",
       "version": "0.9.1.41621",
-      "templateHash": "16864423380719581533"
+      "templateHash": "16520356155684538462"
     }
   },
   "parameters": {
     "workloadName": {
-      "type": "string"
+      "type": "string",
+      "metadata": {
+        "description": "リソース名に付与する識別用の文字列（プロジェクト名など）を入力してください"
+      }
     },
-    "planSkuCode": {
+    "functionPlanSkuCode": {
       "type": "string",
       "defaultValue": "P1v2",
       "allowedValues": [
@@ -31,9 +34,12 @@
         "P1v3",
         "P2v3",
         "P3v3"
-      ]
+      ],
+      "metadata": {
+        "description": "Azure Function のプランを選択してください"
+      }
     },
-    "storageSkuName": {
+    "storageAccountSkuName": {
       "type": "string",
       "defaultValue": "Standard_LRS",
       "allowedValues": [
@@ -45,7 +51,10 @@
         "Standard_RAGRS",
         "Standard_RAGZRS",
         "Standard_ZRS"
-      ]
+      ],
+      "metadata": {
+        "description": "Azure Storage Account の SKU を選択してください"
+      }
     },
     "staticAppLocation": {
       "type": "string",
@@ -56,33 +65,57 @@
         "East Asia",
         "West Europe",
         "West US 2"
-      ]
+      ],
+      "metadata": {
+        "description": "Azure Static Web App の API におけるリージョンを選択してください（実際には Azure Function をリンクするので内蔵APIは使用しませんが、必須項目のため）"
+      }
     },
-    "appLocation": {
+    "staticAppConfigAppLocation": {
       "type": "string",
-      "defaultValue": "nuxt-app"
+      "defaultValue": "nuxt-app",
+      "metadata": {
+        "description": "Azure Static Web App のビルド構成の app_location を指定してください"
+      }
     },
-    "appArtifactLocation": {
+    "staticAppConfigAppOutputLocation": {
       "type": "string",
-      "defaultValue": ".output/public"
+      "defaultValue": ".output/public",
+      "metadata": {
+        "description": "Azure Static Web App のビルド構成の output_location を指定してください"
+      }
     },
-    "appBuildCommand": {
+    "staticAppConfigAppBuildCommand": {
       "type": "string",
-      "defaultValue": "npm run generate"
+      "defaultValue": "npm run generate",
+      "metadata": {
+        "description": "Azure Static Web App のビルド構成の app_build_command を指定してください"
+      }
     },
-    "skipGithubActionWorkflowGeneration": {
+    "staticAppGithubRepositoryUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure Static Web App にデプロイするコードを含む GitHub リポジトリのURLを指定してください"
+      }
+    },
+    "staticAppGithubAccessToken": {
+      "type": "string",
+      "metadata": {
+        "description": "GitHub personal access token を入力してください（必要なスコープ repo, workflow, write:packages）"
+      }
+    },
+    "staticAppGithubRepositoryBranch": {
+      "type": "string",
+      "defaultValue": "main",
+      "metadata": {
+        "description": "Azure Static Web App にデプロイするブランチを入力してください"
+      }
+    },
+    "staticAppSkipGithubActionWorkflowGeneration": {
       "type": "bool",
-      "defaultValue": false
-    },
-    "githubRepositoryBranch": {
-      "type": "string",
-      "defaultValue": "main"
-    },
-    "githubRepositoryUrl": {
-      "type": "string"
-    },
-    "githubAccessToken": {
-      "type": "string"
+      "defaultValue": false,
+      "metadata": {
+        "description": "指定したソースリポジトリに GitHub Actions のワークフローファイルを生成するかどうかを選択してください"
+      }
     }
   },
   "variables": {
@@ -110,7 +143,7 @@
       "location": "[variables('resourceGroupLocation')]",
       "kind": "StorageV2",
       "sku": {
-        "name": "[parameters('storageSkuName')]"
+        "name": "[parameters('storageAccountSkuName')]"
       }
     },
     {
@@ -119,7 +152,7 @@
       "name": "[format('plan-{0}', parameters('workloadName'))]",
       "location": "[variables('resourceGroupLocation')]",
       "sku": {
-        "name": "[parameters('planSkuCode')]"
+        "name": "[parameters('functionPlanSkuCode')]"
       },
       "properties": {}
     },
@@ -198,14 +231,14 @@
         "tier": "Standard"
       },
       "properties": {
-        "repositoryUrl": "[parameters('githubRepositoryUrl')]",
-        "repositoryToken": "[parameters('githubAccessToken')]",
-        "branch": "[parameters('githubRepositoryBranch')]",
+        "repositoryUrl": "[parameters('staticAppGithubRepositoryUrl')]",
+        "repositoryToken": "[parameters('staticAppGithubAccessToken')]",
+        "branch": "[parameters('staticAppGithubRepositoryBranch')]",
         "buildProperties": {
-          "appLocation": "[parameters('appLocation')]",
-          "appArtifactLocation": "[parameters('appArtifactLocation')]",
-          "appBuildCommand": "[parameters('appBuildCommand')]",
-          "skipGithubActionWorkflowGeneration": "[parameters('skipGithubActionWorkflowGeneration')]"
+          "appLocation": "[parameters('staticAppConfigAppLocation')]",
+          "outputLocation": "[parameters('staticAppConfigAppOutputLocation')]",
+          "appBuildCommand": "[parameters('staticAppConfigAppBuildCommand')]",
+          "skipGithubActionWorkflowGeneration": "[parameters('staticAppSkipGithubActionWorkflowGeneration')]"
         }
       }
     }
