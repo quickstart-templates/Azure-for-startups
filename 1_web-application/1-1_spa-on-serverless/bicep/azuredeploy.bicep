@@ -1,9 +1,9 @@
 @description('リソース名に付与する識別用の文字列（プロジェクト名など）を入力してください')
 param workloadName string
 
-@description('Azure Function のプランを選択してください')
+@description('Azure App Service Plan のプランを選択してください')
 @allowed(['F1', 'B1', 'B2', 'B3', 'D1', 'S1', 'S2', 'S3', 'Y1', 'P1v2', 'P2v2', 'P3v2', 'P1v3', 'P2v3', 'P3v3'])
-param functionPlanSkuCode string = 'P1v2'
+param AppServicePlanSkuCode string = 'P1v2'
 
 @description('Azure Storage Account の SKU を選択してください')
 @allowed(['Premium_LRS', 'Premium_ZRS', 'Standard_GRS', 'Standard_GZRS', 'Standard_LRS', 'Standard_RAGRS', 'Standard_RAGZRS', 'Standard_ZRS'])
@@ -25,14 +25,14 @@ param staticAppConfigAppBuildCommand string = 'npm run generate'
 @description('Azure Static Web App にデプロイするコードを含む GitHub リポジトリのURLを指定してください')
 param staticAppGithubRepositoryUrl string
 
-@description('GitHub personal access token を入力してください（必要なスコープ repo, workflow, write:packages）')
-param staticAppGithubAccessToken string
-
 @description('Azure Static Web App にデプロイするブランチを入力してください')
 param staticAppGithubRepositoryBranch string = 'main'
 
-@description('指定したソースリポジトリに GitHub Actions のワークフローファイルを生成するかどうかを選択してください')
+@description('指定したソースリポジトリに対する GitHub Actions のワークフローファイルの生成をスキップするかどうかを選択してください')
 param staticAppSkipGithubActionWorkflowGeneration bool = false
+
+@description('GitHub personal access token を入力してください（必要なスコープ repo, workflow）')
+param staticAppGithubAccessToken string = ''
 
 var resourceGroupId = resourceGroup().id
 var resourceGroupLocation = resourceGroup().location
@@ -50,7 +50,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
   name: 'plan-${workloadName}'
   location: resourceGroupLocation
   sku: {
-    name: functionPlanSkuCode
+    name: AppServicePlanSkuCode
   }
   properties: {}
 }

@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.9.1.41621",
-      "templateHash": "16520356155684538462"
+      "templateHash": "4959513862452835129"
     }
   },
   "parameters": {
@@ -15,7 +15,7 @@
         "description": "リソース名に付与する識別用の文字列（プロジェクト名など）を入力してください"
       }
     },
-    "functionPlanSkuCode": {
+    "AppServicePlanSkuCode": {
       "type": "string",
       "defaultValue": "P1v2",
       "allowedValues": [
@@ -36,7 +36,7 @@
         "P3v3"
       ],
       "metadata": {
-        "description": "Azure Function のプランを選択してください"
+        "description": "Azure App Service Plan のプランを選択してください"
       }
     },
     "storageAccountSkuName": {
@@ -97,12 +97,6 @@
         "description": "Azure Static Web App にデプロイするコードを含む GitHub リポジトリのURLを指定してください"
       }
     },
-    "staticAppGithubAccessToken": {
-      "type": "string",
-      "metadata": {
-        "description": "GitHub personal access token を入力してください（必要なスコープ repo, workflow, write:packages）"
-      }
-    },
     "staticAppGithubRepositoryBranch": {
       "type": "string",
       "defaultValue": "main",
@@ -114,7 +108,14 @@
       "type": "bool",
       "defaultValue": false,
       "metadata": {
-        "description": "指定したソースリポジトリに GitHub Actions のワークフローファイルを生成するかどうかを選択してください"
+        "description": "指定したソースリポジトリに対する GitHub Actions のワークフローファイルの生成をスキップするかどうかを選択してください"
+      }
+    },
+    "staticAppGithubAccessToken": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "GitHub personal access token を入力してください（必要なスコープ repo, workflow）"
       }
     }
   },
@@ -152,7 +153,7 @@
       "name": "[format('plan-{0}', parameters('workloadName'))]",
       "location": "[variables('resourceGroupLocation')]",
       "sku": {
-        "name": "[parameters('functionPlanSkuCode')]"
+        "name": "[parameters('AppServicePlanSkuCode')]"
       },
       "properties": {}
     },
