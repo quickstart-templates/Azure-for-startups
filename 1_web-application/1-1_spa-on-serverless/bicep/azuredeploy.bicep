@@ -31,7 +31,7 @@ param staticAppGithubRepositoryBranch string = 'main'
 @description('指定したソースリポジトリに対する GitHub Actions のワークフローファイルの生成をスキップするかどうかを選択してください')
 param staticAppSkipGithubActionWorkflowGeneration bool = false
 
-@description('GitHub personal access token を入力してください（必要なスコープ repo, workflow）')
+@description('ワークフローファイルを作成する場合、GitHub personal access token を入力してください（必要なスコープ repo, workflow）')
 param staticAppGithubAccessToken string = ''
 
 var resourceGroupId = resourceGroup().id

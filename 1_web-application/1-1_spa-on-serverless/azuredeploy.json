@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.9.1.41621",
-      "templateHash": "4959513862452835129"
+      "templateHash": "8893619236011828484"
     }
   },
   "parameters": {
@@ -115,7 +115,7 @@
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "GitHub personal access token を入力してください（必要なスコープ repo, workflow）"
+        "description": "ワークフローファイルを作成する場合、GitHub personal access token を入力してください（必要なスコープ repo, workflow）"
       }
     }
   },
