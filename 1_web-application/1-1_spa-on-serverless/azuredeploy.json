@@ -1,0 +1,247 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.9.1.41621",
+      "templateHash": "8893619236011828484"
+    }
+  },
+  "parameters": {
+    "workloadName": {
+      "type": "string",
+      "metadata": {
+        "description": "リソース名に付与する識別用の文字列（プロジェクト名など）を入力してください"
+      }
+    },
+    "AppServicePlanSkuCode": {
+      "type": "string",
+      "defaultValue": "P1v2",
+      "allowedValues": [
+        "F1",
+        "B1",
+        "B2",
+        "B3",
+        "D1",
+        "S1",
+        "S2",
+        "S3",
+        "Y1",
+        "P1v2",
+        "P2v2",
+        "P3v2",
+        "P1v3",
+        "P2v3",
+        "P3v3"
+      ],
+      "metadata": {
+        "description": "Azure App Service Plan のプランを選択してください"
+      }
+    },
+    "storageAccountSkuName": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Premium_LRS",
+        "Premium_ZRS",
+        "Standard_GRS",
+        "Standard_GZRS",
+        "Standard_LRS",
+        "Standard_RAGRS",
+        "Standard_RAGZRS",
+        "Standard_ZRS"
+      ],
+      "metadata": {
+        "description": "Azure Storage Account の SKU を選択してください"
+      }
+    },
+    "staticAppLocation": {
+      "type": "string",
+      "defaultValue": "East Asia",
+      "allowedValues": [
+        "Central US",
+        "East US 2",
+        "East Asia",
+        "West Europe",
+        "West US 2"
+      ],
+      "metadata": {
+        "description": "Azure Static Web App の API におけるリージョンを選択してください（実際には Azure Function をリンクするので内蔵APIは使用しませんが、必須項目のため）"
+      }
+    },
+    "staticAppConfigAppLocation": {
+      "type": "string",
+      "defaultValue": "nuxt-app",
+      "metadata": {
+        "description": "Azure Static Web App のビルド構成の app_location を指定してください"
+      }
+    },
+    "staticAppConfigAppOutputLocation": {
+      "type": "string",
+      "defaultValue": ".output/public",
+      "metadata": {
+        "description": "Azure Static Web App のビルド構成の output_location を指定してください"
+      }
+    },
+    "staticAppConfigAppBuildCommand": {
+      "type": "string",
+      "defaultValue": "npm run generate",
+      "metadata": {
+        "description": "Azure Static Web App のビルド構成の app_build_command を指定してください"
+      }
+    },
+    "staticAppGithubRepositoryUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure Static Web App にデプロイするコードを含む GitHub リポジトリのURLを指定してください"
+      }
+    },
+    "staticAppGithubRepositoryBranch": {
+      "type": "string",
+      "defaultValue": "main",
+      "metadata": {
+        "description": "Azure Static Web App にデプロイするブランチを入力してください"
+      }
+    },
+    "staticAppSkipGithubActionWorkflowGeneration": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "指定したソースリポジトリに対する GitHub Actions のワークフローファイルの生成をスキップするかどうかを選択してください"
+      }
+    },
+    "staticAppGithubAccessToken": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "ワークフローファイルを作成する場合、GitHub personal access token を入力してください（必要なスコープ repo, workflow）"
+      }
+    }
+  },
+  "variables": {
+    "resourceGroupId": "[resourceGroup().id]",
+    "resourceGroupLocation": "[resourceGroup().location]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/staticSites/linkedBackends",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}/{1}', format('stapp-{0}', parameters('workloadName')), 'backend')]",
+      "properties": {
+        "region": "[reference(resourceId('Microsoft.Web/sites', format('func-{0}', parameters('workloadName'))), '2022-03-01', 'full').location]",
+        "backendResourceId": "[resourceId('Microsoft.Web/sites', format('func-{0}', parameters('workloadName')))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', format('func-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Web/staticSites', format('stapp-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-09-01",
+      "name": "[format('st{0}', uniqueString(variables('resourceGroupId')))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "kind": "StorageV2",
+      "sku": {
+        "name": "[parameters('storageAccountSkuName')]"
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2022-03-01",
+      "name": "[format('plan-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "sku": {
+        "name": "[parameters('AppServicePlanSkuCode')]"
+      },
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2022-03-01",
+      "name": "[format('func-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "kind": "functionapp",
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', parameters('workloadName')))]",
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "AzureWebJobsDashboard",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', format('st{0}', uniqueString(variables('resourceGroupId'))), listKeys(resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(variables('resourceGroupId')))), '2021-09-01').keys[0].value)]"
+            },
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', format('st{0}', uniqueString(variables('resourceGroupId'))), listKeys(resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(variables('resourceGroupId')))), '2021-09-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', format('st{0}', uniqueString(variables('resourceGroupId'))), listKeys(resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(variables('resourceGroupId')))), '2021-09-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTSHARE",
+              "value": "[toLower(format('func-{0}', parameters('workloadName')))]"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~4"
+            },
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId('Microsoft.Insights/components', format('appi-{0}', parameters('workloadName'))), '2020-02-02').InstrumentationKey]"
+            },
+            {
+              "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+              "value": "[reference(resourceId('Microsoft.Insights/components', format('appi-{0}', parameters('workloadName'))), '2020-02-02').ConnectionString]"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "node"
+            },
+            {
+              "name": "WEBSITE_NODE_DEFAULT_VERSION",
+              "value": "~16"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/components', format('appi-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(variables('resourceGroupId'))))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02",
+      "name": "[format('appi-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web"
+      }
+    },
+    {
+      "type": "Microsoft.Web/staticSites",
+      "apiVersion": "2021-03-01",
+      "name": "[format('stapp-{0}', parameters('workloadName'))]",
+      "location": "[parameters('staticAppLocation')]",
+      "sku": {
+        "name": "Standard",
+        "tier": "Standard"
+      },
+      "properties": {
+        "repositoryUrl": "[parameters('staticAppGithubRepositoryUrl')]",
+        "repositoryToken": "[parameters('staticAppGithubAccessToken')]",
+        "branch": "[parameters('staticAppGithubRepositoryBranch')]",
+        "buildProperties": {
+          "appLocation": "[parameters('staticAppConfigAppLocation')]",
+          "outputLocation": "[parameters('staticAppConfigAppOutputLocation')]",
+          "appBuildCommand": "[parameters('staticAppConfigAppBuildCommand')]",
+          "skipGithubActionWorkflowGeneration": "[parameters('staticAppSkipGithubActionWorkflowGeneration')]"
+        }
+      }
+    }
+  ]
+}
