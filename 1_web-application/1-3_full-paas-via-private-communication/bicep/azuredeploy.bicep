@@ -226,6 +226,7 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
     }
     httpsOnly: true
     vnetRouteAllEnabled: true
+    virtualNetworkSubnetId: virtualNetwork::subnetOutboundWebApp.id
   }
 
   resource outboundVnetConnection 'virtualNetworkConnections@2022-03-01' = {

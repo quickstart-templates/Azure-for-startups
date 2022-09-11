@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.10.13.619",
-      "templateHash": "7730117360402965016"
+      "templateHash": "11664963004646695950"
     }
   },
   "parameters": {
@@ -422,12 +422,14 @@
           ]
         },
         "httpsOnly": true,
-        "vnetRouteAllEnabled": true
+        "vnetRouteAllEnabled": true,
+        "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'outboundWebApp')]"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', parameters('workloadName')))]",
         "[resourceId('Microsoft.Sql/servers/databases', format('sql-{0}', parameters('workloadName')), format('sqldb-{0}', parameters('workloadName')))]",
-        "[resourceId('Microsoft.Sql/servers', format('sql-{0}', parameters('workloadName')))]"
+        "[resourceId('Microsoft.Sql/servers', format('sql-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'outboundWebApp')]"
       ]
     },
     {
