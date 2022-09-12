@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.10.13.619",
-      "templateHash": "11664963004646695950"
+      "templateHash": "3366687603941126549"
     }
   },
   "parameters": {
@@ -38,7 +38,7 @@
         "VpnGw5AZ"
       ],
       "metadata": {
-        "description": ""
+        "description": "VPN ゲートウェイの SKU を選択してください"
       }
     },
     "virtualNetworkGatewaySkuTier": {
@@ -64,7 +64,7 @@
         "VpnGw5AZ"
       ],
       "metadata": {
-        "description": "SKU name と同じ値を指定してください"
+        "description": "VPN ゲートウェイの SKU tier を選択してください（SKU name と同じ値を指定します）"
       }
     },
     "vpnClientProtocol": {
@@ -76,7 +76,7 @@
         "SSTP"
       ],
       "metadata": {
-        "description": ""
+        "description": "VPN ゲートウェイで使用するクライアントプロトコルを選択してください"
       }
     },
     "vpnCilentRootCertificatePublicData": {
@@ -109,17 +109,29 @@
     },
     "sqlDatabaseCollation": {
       "type": "string",
-      "defaultValue": "Japanese_CI_AS"
+      "defaultValue": "Japanese_CI_AS",
+      "metadata": {
+        "description": "Azure SQL Database の照合順序を選択してください"
+      }
     },
     "sqlDatabaseMaxSizeGigabytes": {
       "type": "int",
-      "defaultValue": 32
+      "defaultValue": 32,
+      "metadata": {
+        "description": "Azure SQL Database の最大サイズを入力してください（GB）"
+      }
     },
     "sqlServerAdminLoginUserName": {
-      "type": "string"
+      "type": "string",
+      "metadata": {
+        "description": "Azure SQL Server の管理者ユーザー名を入力してください"
+      }
     },
     "sqlServerAdminLoginPassword": {
-      "type": "secureString"
+      "type": "secureString",
+      "metadata": {
+        "description": "Azure SQL Server の管理者パスワードを入力してください"
+      }
     }
   },
   "variables": {

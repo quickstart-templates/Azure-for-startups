@@ -1,15 +1,15 @@
 @description('リソース名に付与する識別用の文字列（プロジェクト名など）を入力してください')
 param workloadName string
 
-@description('')
+@description('VPN ゲートウェイの SKU を選択してください')
 @allowed(['Basic', 'ErGw1AZ', 'ErGw2AZ', 'ErGw3AZ', 'HighPerformance', 'Standard', 'UltraPerformance', 'VpnGw1', 'VpnGw1AZ', 'VpnGw2', 'VpnGw2AZ', 'VpnGw3', 'VpnGw3AZ', 'VpnGw4', 'VpnGw4AZ', 'VpnGw5', 'VpnGw5AZ'])
 param virtualNetworkGatewaySkuName string = 'VpnGw1'
 
-@description('SKU name と同じ値を指定してください')
+@description('VPN ゲートウェイの SKU tier を選択してください（SKU name と同じ値を指定します）')
 @allowed(['Basic', 'ErGw1AZ', 'ErGw2AZ', 'ErGw3AZ', 'HighPerformance', 'Standard', 'UltraPerformance', 'VpnGw1', 'VpnGw1AZ', 'VpnGw2', 'VpnGw2AZ', 'VpnGw3', 'VpnGw3AZ', 'VpnGw4', 'VpnGw4AZ', 'VpnGw5', 'VpnGw5AZ'])
 param virtualNetworkGatewaySkuTier string = 'VpnGw1'
 
-@description('')
+@description('VPN ゲートウェイで使用するクライアントプロトコルを選択してください')
 @allowed(['IKEv2', 'OpenVPN', 'SSTP'])
 param vpnClientProtocol string = 'IKEv2'
 
@@ -21,12 +21,16 @@ param vpnCilentRootCertificatePublicData string
 @allowed(['B1', 'B2', 'B3', 'D1', 'S1', 'S2', 'S3', 'P1v2', 'P2v2', 'P3v2', 'P1v3', 'P2v3', 'P3v3'])
 param appServicePlanSkuCode string = 'P1v2'
 
+@description('Azure SQL Database の照合順序を選択してください')
 param sqlDatabaseCollation string = 'Japanese_CI_AS'
 
+@description('Azure SQL Database の最大サイズを入力してください（GB）')
 param sqlDatabaseMaxSizeGigabytes int = 32
 
+@description('Azure SQL Server の管理者ユーザー名を入力してください')
 param sqlServerAdminLoginUserName string
 
+@description('Azure SQL Server の管理者パスワードを入力してください')
 @secure()
 param sqlServerAdminLoginPassword string
 
