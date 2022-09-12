@@ -1,0 +1,514 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.10.13.619",
+      "templateHash": "3366687603941126549"
+    }
+  },
+  "parameters": {
+    "workloadName": {
+      "type": "string",
+      "metadata": {
+        "description": "リソース名に付与する識別用の文字列（プロジェクト名など）を入力してください"
+      }
+    },
+    "virtualNetworkGatewaySkuName": {
+      "type": "string",
+      "defaultValue": "VpnGw1",
+      "allowedValues": [
+        "Basic",
+        "ErGw1AZ",
+        "ErGw2AZ",
+        "ErGw3AZ",
+        "HighPerformance",
+        "Standard",
+        "UltraPerformance",
+        "VpnGw1",
+        "VpnGw1AZ",
+        "VpnGw2",
+        "VpnGw2AZ",
+        "VpnGw3",
+        "VpnGw3AZ",
+        "VpnGw4",
+        "VpnGw4AZ",
+        "VpnGw5",
+        "VpnGw5AZ"
+      ],
+      "metadata": {
+        "description": "VPN ゲートウェイの SKU を選択してください"
+      }
+    },
+    "virtualNetworkGatewaySkuTier": {
+      "type": "string",
+      "defaultValue": "VpnGw1",
+      "allowedValues": [
+        "Basic",
+        "ErGw1AZ",
+        "ErGw2AZ",
+        "ErGw3AZ",
+        "HighPerformance",
+        "Standard",
+        "UltraPerformance",
+        "VpnGw1",
+        "VpnGw1AZ",
+        "VpnGw2",
+        "VpnGw2AZ",
+        "VpnGw3",
+        "VpnGw3AZ",
+        "VpnGw4",
+        "VpnGw4AZ",
+        "VpnGw5",
+        "VpnGw5AZ"
+      ],
+      "metadata": {
+        "description": "VPN ゲートウェイの SKU tier を選択してください（SKU name と同じ値を指定します）"
+      }
+    },
+    "vpnClientProtocol": {
+      "type": "string",
+      "defaultValue": "IKEv2",
+      "allowedValues": [
+        "IKEv2",
+        "OpenVPN",
+        "SSTP"
+      ],
+      "metadata": {
+        "description": "VPN ゲートウェイで使用するクライアントプロトコルを選択してください"
+      }
+    },
+    "vpnCilentRootCertificatePublicData": {
+      "type": "secureString",
+      "metadata": {
+        "description": "base64エンコードされたルート証明書の内容を入力してください"
+      }
+    },
+    "appServicePlanSkuCode": {
+      "type": "string",
+      "defaultValue": "P1v2",
+      "allowedValues": [
+        "B1",
+        "B2",
+        "B3",
+        "D1",
+        "S1",
+        "S2",
+        "S3",
+        "P1v2",
+        "P2v2",
+        "P3v2",
+        "P1v3",
+        "P2v3",
+        "P3v3"
+      ],
+      "metadata": {
+        "description": "Azure App Service Plan のプランを選択してください"
+      }
+    },
+    "sqlDatabaseCollation": {
+      "type": "string",
+      "defaultValue": "Japanese_CI_AS",
+      "metadata": {
+        "description": "Azure SQL Database の照合順序を選択してください"
+      }
+    },
+    "sqlDatabaseMaxSizeGigabytes": {
+      "type": "int",
+      "defaultValue": 32,
+      "metadata": {
+        "description": "Azure SQL Database の最大サイズを入力してください（GB）"
+      }
+    },
+    "sqlServerAdminLoginUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure SQL Server の管理者ユーザー名を入力してください"
+      }
+    },
+    "sqlServerAdminLoginPassword": {
+      "type": "secureString",
+      "metadata": {
+        "description": "Azure SQL Server の管理者パスワードを入力してください"
+      }
+    }
+  },
+  "variables": {
+    "resourceGroupLocation": "[resourceGroup().location]",
+    "sqlDatabaseMaxSizeBytes": "[mul(mul(mul(parameters('sqlDatabaseMaxSizeGigabytes'), 1024), 1024), 1024)]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2022-01-01",
+      "name": "[format('{0}/{1}', format('vnet-{0}', parameters('workloadName')), 'inboundWebApp')]",
+      "properties": {
+        "addressPrefix": "10.0.1.0/24",
+        "privateEndpointNetworkPolicies": "Disabled",
+        "serviceEndpoints": [
+          {
+            "service": "Microsoft.Web"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2022-01-01",
+      "name": "[format('{0}/{1}', format('vnet-{0}', parameters('workloadName')), 'outboundWebApp')]",
+      "properties": {
+        "addressPrefix": "10.0.2.0/24",
+        "delegations": [
+          {
+            "name": "delegation",
+            "properties": {
+              "serviceName": "Microsoft.Web/serverFarms"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'inboundWebApp')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2022-01-01",
+      "name": "[format('{0}/{1}', format('vnet-{0}', parameters('workloadName')), 'inboundSqlServer')]",
+      "properties": {
+        "addressPrefix": "10.0.3.0/24",
+        "privateEndpointNetworkPolicies": "Disabled",
+        "serviceEndpoints": [
+          {
+            "service": "Microsoft.Sql"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'outboundWebApp')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2022-01-01",
+      "name": "[format('{0}/{1}', format('vnet-{0}', parameters('workloadName')), 'GatewaySubnet')]",
+      "properties": {
+        "addressPrefix": "10.0.255.0/24"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'inboundSqlServer')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', 'privatelink.azurewebsites.net', format('{0}-link', format('app-{0}', parameters('workloadName'))))]",
+      "location": "global",
+      "properties": {
+        "registrationEnabled": false,
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azurewebsites.net')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Web/sites', format('app-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', format('privatelink{0}', environment().suffixes.sqlServerHostname), format('{0}-link', format('sql-{0}', parameters('workloadName'))))]",
+      "location": "global",
+      "properties": {
+        "registrationEnabled": false,
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink{0}', environment().suffixes.sqlServerHostname))]",
+        "[resourceId('Microsoft.Sql/servers', format('sql-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/virtualNetworkConnections",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}/{1}', format('app-{0}', parameters('workloadName')), 'outbound')]",
+      "properties": {
+        "vnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'outboundWebApp')]",
+        "isSwift": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'outboundWebApp')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Web/sites', format('app-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2021-05-01",
+      "name": "[format('{0}/{1}', format('private-endpoint-{0}-inbound-web-app', parameters('workloadName')), 'default')]",
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "config1",
+            "properties": {
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azurewebsites.net')]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateEndpoints', format('private-endpoint-{0}-inbound-web-app', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azurewebsites.net')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Sql/servers/databases",
+      "apiVersion": "2021-11-01",
+      "name": "[format('{0}/{1}', format('sql-{0}', parameters('workloadName')), format('sqldb-{0}', parameters('workloadName')))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "sku": {
+        "name": "GP_S_Gen5",
+        "tier": "GeneralPurpose",
+        "family": "Gen5",
+        "capacity": 1
+      },
+      "properties": {
+        "collation": "[parameters('sqlDatabaseCollation')]",
+        "maxSizeBytes": "[variables('sqlDatabaseMaxSizeBytes')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', format('sql-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2021-05-01",
+      "name": "[format('{0}/{1}', format('private-endpoint-{0}-inbound-sql-server', parameters('workloadName')), 'default')]",
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "config1",
+            "properties": {
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink{0}', environment().suffixes.sqlServerHostname))]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateEndpoints', format('private-endpoint-{0}-inbound-sql-server', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink{0}', environment().suffixes.sqlServerHostname))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2022-01-01",
+      "name": "[format('vnet-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2020-06-01",
+      "name": "privatelink.azurewebsites.net",
+      "location": "global",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2020-06-01",
+      "name": "[format('privatelink{0}', environment().suffixes.sqlServerHostname)]",
+      "location": "global",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2022-01-01",
+      "name": "[format('pip-{0}-vgw', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static"
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworkGateways",
+      "apiVersion": "2020-11-01",
+      "name": "[format('vgw-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "default",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'GatewaySubnet')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', format('pip-{0}-vgw', parameters('workloadName')))]"
+              }
+            }
+          }
+        ],
+        "sku": {
+          "name": "[parameters('virtualNetworkGatewaySkuName')]",
+          "tier": "[parameters('virtualNetworkGatewaySkuTier')]"
+        },
+        "gatewayType": "Vpn",
+        "vpnType": "RouteBased",
+        "vpnClientConfiguration": {
+          "vpnClientAddressPool": {
+            "addressPrefixes": [
+              "10.1.0.0/16"
+            ]
+          },
+          "vpnClientProtocols": [
+            "[parameters('vpnClientProtocol')]"
+          ],
+          "vpnAuthenticationTypes": [
+            "Certificate"
+          ],
+          "vpnClientRootCertificates": [
+            {
+              "name": "P2SRootCert",
+              "properties": {
+                "publicCertData": "[parameters('vpnCilentRootCertificatePublicData')]"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', format('pip-{0}-vgw', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'GatewaySubnet')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2022-03-01",
+      "name": "[format('plan-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "sku": {
+        "name": "[parameters('appServicePlanSkuCode')]"
+      },
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2022-03-01",
+      "name": "[format('app-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', parameters('workloadName')))]",
+        "siteConfig": {
+          "alwaysOn": "[not(contains(createArray('F1', 'D1'), parameters('appServicePlanSkuCode')))]",
+          "http20Enabled": true,
+          "ftpsState": "Disabled",
+          "appSettings": [
+            {
+              "name": "SQL_DATABASE_CONNECTION_STRING",
+              "value": "[format('Data Source=tcp:{0},1433;Initial Catalog={1};User Id={2}@{3};Password={4};', reference(resourceId('Microsoft.Sql/servers', format('sql-{0}', parameters('workloadName')))).fullyQualifiedDomainName, format('sqldb-{0}', parameters('workloadName')), parameters('sqlServerAdminLoginUserName'), reference(resourceId('Microsoft.Sql/servers', format('sql-{0}', parameters('workloadName')))).fullyQualifiedDomainName, parameters('sqlServerAdminLoginPassword'))]"
+            }
+          ]
+        },
+        "httpsOnly": true,
+        "vnetRouteAllEnabled": true,
+        "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'outboundWebApp')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Sql/servers/databases', format('sql-{0}', parameters('workloadName')), format('sqldb-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Sql/servers', format('sql-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'outboundWebApp')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2022-01-01",
+      "name": "[format('private-endpoint-{0}-inbound-web-app', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "properties": {
+        "privateLinkServiceConnections": [
+          {
+            "name": "inboundWebApp",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Web/sites', format('app-{0}', parameters('workloadName')))]",
+              "groupIds": [
+                "sites"
+              ]
+            }
+          }
+        ],
+        "subnet": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'inboundWebApp')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'inboundWebApp')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Web/sites', format('app-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2021-11-01",
+      "name": "[format('sql-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "properties": {
+        "administratorLogin": "[parameters('sqlServerAdminLoginUserName')]",
+        "administratorLoginPassword": "[parameters('sqlServerAdminLoginPassword')]",
+        "version": "12.0",
+        "publicNetworkAccess": "Disabled"
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2022-01-01",
+      "name": "[format('private-endpoint-{0}-inbound-sql-server', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "properties": {
+        "privateLinkServiceConnections": [
+          {
+            "name": "inboundSqlServer",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Sql/servers', format('sql-{0}', parameters('workloadName')))]",
+              "groupIds": [
+                "sqlServer"
+              ]
+            }
+          }
+        ],
+        "subnet": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'inboundSqlServer')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', format('sql-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'inboundSqlServer')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+      ]
+    }
+  ]
+}
