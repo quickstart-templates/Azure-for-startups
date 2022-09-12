@@ -44,6 +44,8 @@ Azure Private Endpoint を使用することで、PaaS 製品のエンドポイ�
 
 各入力欄に適宜入力し、「Review + create」ボタンを選択します。パラメータの検証が正常に完了したら、「Create」ボタンを選択してデプロイを実行します。
 
+<img src="./docs/images/deploy_001.png" width="80%" alt="デプロイのパラメータ入力画面">
+
 | 項目 | 説明 |
 |----|----|
 | Project details | |
@@ -57,10 +59,10 @@ Azure Private Endpoint を使用することで、PaaS 製品のエンドポイ�
 | Vpn Client Protocol | VPN ゲートウェイで使用するクライアントプロトコルを選択（※2） |
 | Vpn Client Root Certificate Public Data | base64エンコードされたルート証明書の内容を入力（※3） |
 | App Service Plan Sku Name | Azure App Service Plan の SKU を選択 |
-| Sql Database Collation | Azure SQL Database の照合順序を選択 |
+| Sql Database Collation | Azure SQL Database の照合順序を選択（※4） |
 | Sql Database Max Size Gigabyes | Azure SQL Database の最大サイズを入力（GB） |
 | Sql Server Admin Login User Name | Azure SQL Server の管理者ユーザー名を入力 |
-| Sql Server Admin Login Password | Azure SQL Server の管理者ユーザーのパスワードを入力 |
+| Sql Server Admin Login Password | Azure SQL Server の管理者ユーザーのパスワードを入力（※5） |
 
 ※1 VPN ゲートウェイの SKU については、トンネルの数や種類、スループットによって異なります。詳細はこちらをご参照ください。
 
@@ -70,9 +72,17 @@ Azure Private Endpoint を使用することで、PaaS 製品のエンドポイ�
 
 - [トンネルの種類と認証の種類を指定する](https://docs.microsoft.com/ja-jp/azure/vpn-gateway/vpn-gateway-howto-point-to-site-resource-manager-portal#type)
 
-※3 前項で生成したルート証明書 _P2SRootCert.cer_ は、ファイルを開くと base64 でエンコードされた値を含みます。その値（`-----BEGIN CERTIFICATE-----` と `-----END CERTIFICATE-----` を除く）を Vpn Client Root Certtificate Public Data として入力します。このとき、**改行などの制御文字が入らないようご注意** ください。詳しくは、[ルート証明書の公開キー情報をアップロードする](https://docs.microsoft.com/ja-jp/azure/vpn-gateway/vpn-gateway-howto-point-to-site-resource-manager-portal#uploadfile) をご参照ください。
+※3 前項で生成したルート証明書 _P2SRootCert.cer_ は、ファイルを開くと base64 でエンコードされた値を含みます。その値（`-----BEGIN CERTIFICATE-----` と `-----END CERTIFICATE-----` を除く）を「Vpn Client Root Certtificate Public Data」として入力します。このとき、**改行などの制御文字が入らないようご注意** ください。詳しくは、[ルート証明書の公開キー情報をアップロードする](https://docs.microsoft.com/ja-jp/azure/vpn-gateway/vpn-gateway-howto-point-to-site-resource-manager-portal#uploadfile) をご参照ください。
 
 <img src="./docs/images/rootcert-content-without-linebreak.png" width="80%" alt="ルート証明書ファイルの改行を含まない値">
+
+※4 Azure SQL Server の照合順序については、こちらをご参照ください。
+
+- [照合順序と Unicode のサポート - SQL Server | Microsoft Docs](https://docs.microsoft.com/ja-jp/sql/relational-databases/collations/collation-and-unicode-support?view=sql-server-ver16)
+
+※5 Azure SQL Server のパスワードについては、SQL Server のパスワードポリシーに従う必要があります。英数字記号を含む8文字以上の文字列を入力してください。詳細はこちらをご参照ください。
+
+- [パスワード ポリシー - SQL Server | Microsoft Docs](https://docs.microsoft.com/ja-jp/sql/relational-databases/security/password-policy?view=sql-server-ver16)
 
 
 ## リソース配置後の作業
@@ -83,7 +93,7 @@ VPN ゲートウェイに接続するには、VPNゲートウェイ（Virtual ne
 
 <img src="./docs/images/vpn-gateway_p2s_download-vpn-client.png" width="80%" alt="Virtual network gateway の Point-to-site configuration から VPN client をダウンロードする">
 
-詳しくは、こちらをご参考ください。
+詳しくは、こちらをご参照ください。
 
 - [Azure に接続する](https://docs.microsoft.com/ja-jp/azure/vpn-gateway/vpn-gateway-howto-point-to-site-resource-manager-portal#connect)
 
