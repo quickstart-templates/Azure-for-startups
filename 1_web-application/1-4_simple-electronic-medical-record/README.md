@@ -13,6 +13,10 @@ Azure App Service はコンテナのデプロイにも対応しています。�
 ### Azure リソース構成
 
 
+
+<img src="./docs/images/generated-structure-by-arm.png" width="80%" alt="構成図">
+
+
 ## 利用方法
 
 ### 事前準備
@@ -69,3 +73,45 @@ az deployment group create --resource-group ${RESOURCE_GROUP_NAME} --template-fi
 ```bash
 az bicep build --file bicep/azuredeploy.bicep --outdir .
 ```
+
+
+### App service の SCM から内部ネットワークの疎通確認を行う
+
+本構成の Web App for container は、SSH接続できるイメージを利用しており、SCM 管理ツールのコンソールから操作が可能です。疎通確認の際は下記をご参考ください。
+
+```bash
+apt update
+apt install traceroute stunnel redis-tools defualt-mysql-client
+
+# ドメイン解決の確認
+nslookup {host name}
+
+# 接続ルートの確認
+traceroute {host name}
+
+# Redis の接続確認
+vi /etc/stunnel/stunnel.conf  # 下記を参考に記述
+service stunnel4 reload
+service stunnel4 start
+redis-cli -p 6380
+127.0.0.1:6380> AUTH {Azure Cache for Redis key}
+
+# MySQL の接続確認
+MYSQL_HOST={Azure Database for MySQL name}.mysql.database.azure.com
+MYSQL_HOST=mysql-debug-0914.mysql.database.azure.com
+mysql -h $MYSQL_HOST -u {user name}@$MYSQL_HOST -p --ssl
+Enter password: {password}
+```
+
+_/etc/stunnel/stunnel.conf_ の設定は下記のように記述します。
+```
+[redis-cli]
+client = yes
+accept = 127.0.0.1:6380
+connect = {Azure Cache for Redis name}.redis.cache.windows.net:6380
+```
+
+`redis-cli` を用いた Azure Cache for Redis への接続は、下記もご参考ください。
+
+```
+- [Azure Cache for Redis での redis-cli の使用 | Microsoft Docs](https://docs.microsoft.com/ja-jp/azure/azure-cache-for-redis/cache-how-to-redis-cli-tool)
