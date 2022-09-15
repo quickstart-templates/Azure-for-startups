@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.10.61.36676",
-      "templateHash": "8953953990054070966"
+      "templateHash": "1941111162853454751"
     }
   },
   "parameters": {
@@ -462,7 +462,7 @@
         "vnetRouteAllEnabled": true,
         "vnetImagePullEnabled": false,
         "siteConfig": {
-          "linuxFxVersion": "DOCKER|nginx:latest",
+          "linuxFxVersion": "DOCKER|mcr.microsoft.com/appsvc/staticsite:latest",
           "acrUseManagedIdentityCreds": true,
           "alwaysOn": true,
           "http20Enabled": true,

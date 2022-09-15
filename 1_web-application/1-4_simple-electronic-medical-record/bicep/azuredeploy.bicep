@@ -333,7 +333,7 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
     vnetRouteAllEnabled: true
     vnetImagePullEnabled: false
     siteConfig: {
-      linuxFxVersion: 'DOCKER|nginx:latest'
+      linuxFxVersion: 'DOCKER|mcr.microsoft.com/appsvc/staticsite:latest'
       acrUseManagedIdentityCreds: true
       alwaysOn: true
       http20Enabled: true
