@@ -12,21 +12,21 @@ Azure App Service はコンテナのデプロイにも対応しています。�
 
 ### Azure リソース構成
 
-
+- Azure Application Gateway (WAF)
+- Azure Web App for Containers
+- Azure Container Registry
+- Azure Key Vault
+- Azure Cache for Redis
+- Azure Database for MySQL
 
 <img src="./docs/images/generated-structure-by-arm.png" width="80%" alt="構成図">
 
+なお、Azure AD は統合的なサービスなのでリソース作成は行いません。アプリケーションへ認証機構を導入するなどについては下記をご参照ください。
+
+- [Microsoft ID プラットフォームのドキュメント - Microsoft Entra | Microsoft Docs](https://docs.microsoft.com/ja-jp/azure/active-directory/develop/)
+
 
 ## 利用方法
-
-### 事前準備
-
-- ユーザーの object ID の取得
-
-```
-az ad user list --output table
-az ad user show --id {UserPrincipalName}
-```
 
 ### リソースのデプロイ
 
@@ -46,10 +46,32 @@ az ad user show --id {UserPrincipalName}
 | Instance details | |
 | Region | 利用するリージョンを選択 |
 | Workload Name | リソース名に付与する識別用の文字列（プロジェクト名など）を入力 |
+| Cache For Redis Sku Name | Azure Cache for Redis の SKU を選択 |
+| Cache For Redis Capacity | Azure Cache for Redis のキャパシティを選択（SKU が Basic/Standard の場合は 0 ～ 6、Premium の場合は 1 ～ 4） |
+| My Sql Server Version | Azure Database for MySQL の MySQL のバージョンを選択 |
+| My Sql Server Admin Ligin User Name | Azure Database for MySQL の管理者ユーザー名を入力 |
+| My Sql Server Admin Login Password | Azure Database for MySQL の管理者パスワードを入力（MySQL のパスワードポリシーに従ってください） |
+| Key Vault Access Policy User Object Id | Azure Key Vault を利用するユーザーの object ID を入力（任意）（※1） |
+| App Service Plan Sku Name | Azure App Service Plan のプランを選択 |
 
+※1 Key Vault は、アクセスポリシーを用いてキー/シークレット/証明書の操作を管理します。アクセスポリシーは、Azure  ポータルや Azure CLI を用いて管理が可能です。
 
+本構成では、Web App for Container からの読取り権限を設定しているほか、リソースデプロイ時の「Key Vault Access Policy User Object Id」にユーザーの Object ID が設定されている場合に、そのユーザーに対して権限を付与しています。
 
-key vault は、ネットワーク制限をしているため、ポータルからシークレットなどの変更ができません。アクセスする場合は IP許可するなどの疎通を行ってください。
+ユーザーの Object ID を確認するには、Azure ポータルの「Azure Active Dire tory」>「ユーザー」からユーザーを選択し、「Object ID」を確認できます。もしくは、下記のように Azure CLI を用いて確認することもできます。
+
+```bash
+# Azure AD ユーザー一覧を取得し、UserPrincipalName を確認する
+az ad user list --output table
+# UserPrincipalName からユーザーの id (object ID) を確認する
+az ad user show --id {UserPrincipalName} --output tsv --query id
+```
+
+### 備考
+
+本構成では、Azure Key Vault にネットワーク制限を設定しているため、Azure ポータルや手元の環境からの Azure CLI からの操作では、シークレットなどの変更ができません。ネットワーク設定の変更は、Azure ポータルまたは　Azure CLI でできるので、作業環境のIPを許可するなどの疎通を行ってください。
+
+- [Azure Key Vault のネットワーク構成を構成する方法 | Microsoft Docs](https://docs.microsoft.com/ja-jp/azure/key-vault/general/how-to-azure-key-vault-network-security?tabs=azure-portal)
 
 
 ## デバッグ
@@ -113,5 +135,4 @@ connect = {Azure Cache for Redis name}.redis.cache.windows.net:6380
 
 `redis-cli` を用いた Azure Cache for Redis への接続は、下記もご参考ください。
 
-```
 - [Azure Cache for Redis での redis-cli の使用 | Microsoft Docs](https://docs.microsoft.com/ja-jp/azure/azure-cache-for-redis/cache-how-to-redis-cli-tool)
