@@ -22,7 +22,7 @@ param mySqlServerAdminLoginUserName string
 param mySqlServerAdminLoginPassword string
 
 @description('Azure Key Vault を利用するユーザーの Object ID を入力してください')
-param userObjectId string
+param keyVaultAccessPolicyUserObjectId string = ''
 
 @description('Azure App Service Plan のプランを選択してください')
 @allowed(['B1', 'B2', 'B3', 'D1', 'S1', 'S2', 'S3', 'P1v2', 'P2v2', 'P3v2', 'P1v3', 'P2v3', 'P3v3'])
@@ -228,6 +228,37 @@ resource privateEndpointMySql 'Microsoft.Network/privateEndpoints@2022-01-01' = 
   }
 }
 
+var accessPoliciesWebApp = [
+  // web app
+  {
+    tenantId: subscription().tenantId
+    objectId: webApp.identity.principalId
+    permissions: {
+      secrets: [
+        'get'
+      ]
+    }
+  }
+]
+
+var accessPoliciesManager = [
+  {
+    tenantId: subscription().tenantId
+    objectId: keyVaultAccessPolicyUserObjectId
+    permissions: {
+      keys: [
+        'all'
+      ]
+      secrets: [
+        'all'
+      ]
+      certificates: [
+        'all'
+      ]
+    }
+  }
+]
+
 resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
   name: 'kv-${workloadName}'
   location: resourceGroupLocation
@@ -240,34 +271,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
     enabledForTemplateDeployment: true
     enabledForDiskEncryption: true
     tenantId: subscription().tenantId
-    accessPolicies: [
-      // user
-      {
-        tenantId: subscription().tenantId
-        objectId: userObjectId
-        permissions: {
-          keys: [
-            'all'
-          ]
-          secrets: [
-            'all'
-          ]
-          certificates: [
-            'all'
-          ]
-        }
-      }
-      // web app
-      {
-        tenantId: subscription().tenantId
-        objectId: webApp.identity.principalId
-        permissions: {
-          secrets: [
-            'get'
-          ]
-        }
-      }
-    ]
+    accessPolicies: keyVaultAccessPolicyUserObjectId == '' ? accessPoliciesWebApp : concat(accessPoliciesWebApp, accessPoliciesManager)
     networkAcls: {
       bypass: 'AzureServices'
       virtualNetworkRules: [
@@ -278,6 +282,9 @@ resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
       ]
     }
   }
+  dependsOn: [
+    webApp
+  ]
 
   resource secretMySqlHost 'secrets@2022-07-01' = {
     name: 'mysql-host'

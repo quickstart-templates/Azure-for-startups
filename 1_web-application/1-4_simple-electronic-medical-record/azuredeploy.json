@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.10.61.36676",
-      "templateHash": "1941111162853454751"
+      "templateHash": "3286355654144543026"
     }
   },
   "parameters": {
@@ -59,8 +59,9 @@
         "description": "Azure Database for MySQL の管理者パスワードを入力してください"
       }
     },
-    "userObjectId": {
+    "keyVaultAccessPolicyUserObjectId": {
       "type": "string",
+      "defaultValue": "",
       "metadata": {
         "description": "Azure Key Vault を利用するユーザーの Object ID を入力してください"
       }
@@ -89,7 +90,24 @@
     }
   },
   "variables": {
-    "resourceGroupLocation": "[resourceGroup().location]"
+    "resourceGroupLocation": "[resourceGroup().location]",
+    "accessPoliciesManager": [
+      {
+        "tenantId": "[subscription().tenantId]",
+        "objectId": "[parameters('keyVaultAccessPolicyUserObjectId')]",
+        "permissions": {
+          "keys": [
+            "all"
+          ],
+          "secrets": [
+            "all"
+          ],
+          "certificates": [
+            "all"
+          ]
+        }
+      }
+    ]
   },
   "resources": [
     {
@@ -393,32 +411,7 @@
         "enabledForTemplateDeployment": true,
         "enabledForDiskEncryption": true,
         "tenantId": "[subscription().tenantId]",
-        "accessPolicies": [
-          {
-            "tenantId": "[subscription().tenantId]",
-            "objectId": "[parameters('userObjectId')]",
-            "permissions": {
-              "keys": [
-                "all"
-              ],
-              "secrets": [
-                "all"
-              ],
-              "certificates": [
-                "all"
-              ]
-            }
-          },
-          {
-            "tenantId": "[subscription().tenantId]",
-            "objectId": "[reference(resourceId('Microsoft.Web/sites', format('app-{0}', parameters('workloadName'))), '2022-03-01', 'full').identity.principalId]",
-            "permissions": {
-              "secrets": [
-                "get"
-              ]
-            }
-          }
-        ],
+        "accessPolicies": "[if(equals(parameters('keyVaultAccessPolicyUserObjectId'), ''), createArray(createObject('tenantId', subscription().tenantId, 'objectId', reference(resourceId('Microsoft.Web/sites', format('app-{0}', parameters('workloadName'))), '2022-03-01', 'full').identity.principalId, 'permissions', createObject('secrets', createArray('get')))), concat(createArray(createObject('tenantId', subscription().tenantId, 'objectId', reference(resourceId('Microsoft.Web/sites', format('app-{0}', parameters('workloadName'))), '2022-03-01', 'full').identity.principalId, 'permissions', createObject('secrets', createArray('get')))), variables('accessPoliciesManager')))]",
         "networkAcls": {
           "bypass": "AzureServices",
           "virtualNetworkRules": [
