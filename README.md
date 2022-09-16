@@ -6,7 +6,7 @@
 
 - [1-1 Nuxt.js で SPA をサーバーレス環境にデプロイしたい](./1_web-application/1-1_spa-on-serverless/)
 - [1-3 プライベート通信のみのシステムを Full PaaS で実現したい](./1_web-application/1-3_full-paas-via-private-communication/)
-- [1-4 患者情報を入力できる簡易的な電子カルテサービスを実装したい](./1_web-application/1-4_simple-electronic-medical-record/))]
+- [1-4 患者情報を入力できる簡易的な電子カルテサービスを実装したい](./1_web-application/1-4_simple-electronic-medical-record/)
 
 
 ## 本リポジトリの利用について
