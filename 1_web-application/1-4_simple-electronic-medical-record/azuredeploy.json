@@ -1,0 +1,652 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.10.61.36676",
+      "templateHash": "3286355654144543026"
+    }
+  },
+  "parameters": {
+    "workloadName": {
+      "type": "string",
+      "metadata": {
+        "description": "リソース名に付与する識別用の文字列（プロジェクト名など）を入力してください"
+      }
+    },
+    "cacheForRedisSkuName": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Basic",
+        "Standard",
+        "Premium"
+      ],
+      "metadata": {
+        "description": "Azure Cache for Redis の SKU を選択してください"
+      }
+    },
+    "cacheForRedisCapacity": {
+      "type": "int",
+      "defaultValue": 0,
+      "maxValue": 6,
+      "minValue": 0,
+      "metadata": {
+        "description": "Azure Cache for Redis のキャパシティを選択してください（SKU が Basic/Standard の場合は 0 ～ 6、Premium の場合は 1 ～ 4）"
+      }
+    },
+    "mySqlServerVersion": {
+      "type": "string",
+      "defaultValue": "8.0",
+      "allowedValues": [
+        "5.7",
+        "8.0"
+      ],
+      "metadata": {
+        "description": "Azure Database for MySQL の MySQL のバージョンを選択してください"
+      }
+    },
+    "mySqlServerAdminLoginUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure Database for MySQL の管理者ユーザー名を入力してください"
+      }
+    },
+    "mySqlServerAdminLoginPassword": {
+      "type": "secureString",
+      "metadata": {
+        "description": "Azure Database for MySQL の管理者パスワードを入力してください"
+      }
+    },
+    "keyVaultAccessPolicyUserObjectId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Azure Key Vault を利用するユーザーの Object ID を入力してください"
+      }
+    },
+    "appServicePlanSkuCode": {
+      "type": "string",
+      "defaultValue": "P1v2",
+      "allowedValues": [
+        "B1",
+        "B2",
+        "B3",
+        "D1",
+        "S1",
+        "S2",
+        "S3",
+        "P1v2",
+        "P2v2",
+        "P3v2",
+        "P1v3",
+        "P2v3",
+        "P3v3"
+      ],
+      "metadata": {
+        "description": "Azure App Service Plan のプランを選択してください"
+      }
+    }
+  },
+  "variables": {
+    "resourceGroupLocation": "[resourceGroup().location]",
+    "accessPoliciesManager": [
+      {
+        "tenantId": "[subscription().tenantId]",
+        "objectId": "[parameters('keyVaultAccessPolicyUserObjectId')]",
+        "permissions": {
+          "keys": [
+            "all"
+          ],
+          "secrets": [
+            "all"
+          ],
+          "certificates": [
+            "all"
+          ]
+        }
+      }
+    ]
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2022-01-01",
+      "name": "[format('{0}/{1}', format('vnet-{0}', parameters('workloadName')), 'frontend')]",
+      "properties": {
+        "addressPrefix": "10.0.0.0/24",
+        "privateEndpointNetworkPolicies": "Disabled",
+        "serviceEndpoints": [
+          {
+            "service": "Microsoft.Web"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2022-01-01",
+      "name": "[format('{0}/{1}', format('vnet-{0}', parameters('workloadName')), 'outbound-webapp')]",
+      "properties": {
+        "addressPrefix": "10.0.1.0/24",
+        "privateEndpointNetworkPolicies": "Disabled",
+        "serviceEndpoints": [
+          {
+            "service": "Microsoft.KeyVault",
+            "locations": [
+              "*"
+            ]
+          }
+        ],
+        "delegations": [
+          {
+            "name": "delegation",
+            "properties": {
+              "serviceName": "Microsoft.Web/serverFarms"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'frontend')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2022-01-01",
+      "name": "[format('{0}/{1}', format('vnet-{0}', parameters('workloadName')), 'backend')]",
+      "properties": {
+        "addressPrefix": "10.0.2.0/24"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'outbound-webapp')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', 'privatelink.redis.cache.windows.net', format('{0}-link', format('redis-{0}', parameters('workloadName'))))]",
+      "location": "global",
+      "properties": {
+        "registrationEnabled": false,
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.redis.cache.windows.net')]",
+        "[resourceId('Microsoft.Cache/redis', format('redis-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', 'privatelink.mysql.database.azure.com', format('{0}-link', format('mysql-{0}', parameters('workloadName'))))]",
+      "location": "global",
+      "properties": {
+        "registrationEnabled": false,
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DBforMySQL/servers', format('mysql-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.mysql.database.azure.com')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2022-01-01",
+      "name": "[format('{0}/{1}', format('private-endpoint-{0}-redis-cache', parameters('workloadName')), 'default')]",
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "config1",
+            "properties": {
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.redis.cache.windows.net')]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.redis.cache.windows.net')]",
+        "[resourceId('Microsoft.Network/privateEndpoints', format('private-endpoint-{0}-redis-cache', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2022-01-01",
+      "name": "[format('{0}/{1}', format('private-endpoint-{0}-mysql', parameters('workloadName')), 'default')]",
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "config1",
+            "properties": {
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.mysql.database.azure.com')]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.mysql.database.azure.com')]",
+        "[resourceId('Microsoft.Network/privateEndpoints', format('private-endpoint-{0}-mysql', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2022-07-01",
+      "name": "[format('{0}/{1}', format('kv-{0}', parameters('workloadName')), 'mysql-host')]",
+      "properties": {
+        "value": "[format('{0}.mysql.database.azure.com', format('mysql-{0}', parameters('workloadName')))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.DBforMySQL/servers', format('mysql-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2022-07-01",
+      "name": "[format('{0}/{1}', format('kv-{0}', parameters('workloadName')), 'mysql-user')]",
+      "properties": {
+        "value": "[parameters('mySqlServerAdminLoginUserName')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2022-07-01",
+      "name": "[format('{0}/{1}', format('kv-{0}', parameters('workloadName')), 'mysql-key')]",
+      "properties": {
+        "value": "[parameters('mySqlServerAdminLoginPassword')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2022-07-01",
+      "name": "[format('{0}/{1}', format('kv-{0}', parameters('workloadName')), 'redis-cache-key')]",
+      "properties": {
+        "value": "[listKeys(resourceId('Microsoft.Cache/redis', format('redis-{0}', parameters('workloadName'))), '2022-05-01').primaryKey]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Cache/redis', format('redis-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2022-01-01",
+      "name": "[format('vnet-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2020-06-01",
+      "name": "privatelink.redis.cache.windows.net",
+      "location": "global",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2020-06-01",
+      "name": "privatelink.mysql.database.azure.com",
+      "location": "global",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Cache/redis",
+      "apiVersion": "2022-05-01",
+      "name": "[format('redis-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "properties": {
+        "sku": {
+          "name": "[parameters('cacheForRedisSkuName')]",
+          "family": "[if(equals(parameters('cacheForRedisSkuName'), 'Premium'), 'P', 'C')]",
+          "capacity": "[parameters('cacheForRedisCapacity')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2022-01-01",
+      "name": "[format('private-endpoint-{0}-redis-cache', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "properties": {
+        "privateLinkServiceConnections": [
+          {
+            "name": "redisCache",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Cache/redis', format('redis-{0}', parameters('workloadName')))]",
+              "groupIds": [
+                "redisCache"
+              ]
+            }
+          }
+        ],
+        "subnet": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'backend')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cache/redis', format('redis-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'backend')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DBforMySQL/servers",
+      "apiVersion": "2017-12-01",
+      "name": "[format('mysql-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "sku": {
+        "name": "GP_Gen5_2",
+        "tier": "GeneralPurpose",
+        "family": "Gen5",
+        "capacity": 2
+      },
+      "properties": {
+        "administratorLogin": "[parameters('mySqlServerAdminLoginUserName')]",
+        "administratorLoginPassword": "[parameters('mySqlServerAdminLoginPassword')]",
+        "version": "[parameters('mySqlServerVersion')]",
+        "createMode": "Default"
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2022-01-01",
+      "name": "[format('private-endpoint-{0}-mysql', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "properties": {
+        "privateLinkServiceConnections": [
+          {
+            "name": "mysql",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.DBforMySQL/servers', format('mysql-{0}', parameters('workloadName')))]",
+              "groupIds": [
+                "mysqlServer"
+              ]
+            }
+          }
+        ],
+        "subnet": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'backend')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DBforMySQL/servers', format('mysql-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'backend')]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2022-07-01",
+      "name": "[format('kv-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "properties": {
+        "sku": {
+          "name": "standard",
+          "family": "A"
+        },
+        "enabledForDeployment": true,
+        "enabledForTemplateDeployment": true,
+        "enabledForDiskEncryption": true,
+        "tenantId": "[subscription().tenantId]",
+        "accessPolicies": "[if(equals(parameters('keyVaultAccessPolicyUserObjectId'), ''), createArray(createObject('tenantId', subscription().tenantId, 'objectId', reference(resourceId('Microsoft.Web/sites', format('app-{0}', parameters('workloadName'))), '2022-03-01', 'full').identity.principalId, 'permissions', createObject('secrets', createArray('get')))), concat(createArray(createObject('tenantId', subscription().tenantId, 'objectId', reference(resourceId('Microsoft.Web/sites', format('app-{0}', parameters('workloadName'))), '2022-03-01', 'full').identity.principalId, 'permissions', createObject('secrets', createArray('get')))), variables('accessPoliciesManager')))]",
+        "networkAcls": {
+          "bypass": "AzureServices",
+          "virtualNetworkRules": [
+            {
+              "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'outbound-webapp')]",
+              "ignoreMissingVnetServiceEndpoint": false
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'outbound-webapp')]",
+        "[resourceId('Microsoft.Web/sites', format('app-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2022-03-01",
+      "name": "[format('plan-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "sku": {
+        "name": "[parameters('appServicePlanSkuCode')]"
+      },
+      "kind": "linux",
+      "properties": {
+        "reserved": true
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2022-03-01",
+      "name": "[format('app-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "kind": "app,linux,container",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', parameters('workloadName')))]",
+        "reserved": true,
+        "vnetRouteAllEnabled": true,
+        "vnetImagePullEnabled": false,
+        "siteConfig": {
+          "linuxFxVersion": "DOCKER|mcr.microsoft.com/appsvc/staticsite:latest",
+          "acrUseManagedIdentityCreds": true,
+          "alwaysOn": true,
+          "http20Enabled": true,
+          "minTlsVersion": "1.2",
+          "ftpsState": "Disabled",
+          "ipSecurityRestrictions": [
+            {
+              "vnetSubnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'frontend')]",
+              "action": "Allow",
+              "tag": "Default",
+              "priority": 300
+            },
+            {
+              "ipAddress": "GatewayManager",
+              "action": "Allow",
+              "tag": "ServiceTag",
+              "priority": 301,
+              "name": "from Application Gateway"
+            }
+          ],
+          "appSettings": [
+            {
+              "name": "MYSQL_HOST",
+              "value": "[format('@Microsoft.KeyVault(SecretUri=https://kv-{0}.vault.azure.net/secrets/mysql-host/)', parameters('workloadName'))]"
+            },
+            {
+              "name": "MYSQL_USER",
+              "value": "[format('@Microsoft.KeyVault(SecretUri=https://kv-{0}.vault.azure.net/secrets/mysql-user/)', parameters('workloadName'))]"
+            },
+            {
+              "name": "MYSQL_KEY",
+              "value": "[format('@Microsoft.KeyVault(SecretUri=https://kv-{0}.vault.azure.net/secrets/mysql-key/)', parameters('workloadName'))]"
+            },
+            {
+              "name": "REDIS_CACHE_KEY",
+              "value": "[format('@Microsoft.KeyVault(SecretUri=https://kv-{0}.vault.azure.net/secrets/redis-cache-key/)', parameters('workloadName'))]"
+            }
+          ]
+        },
+        "httpsOnly": true,
+        "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'outbound-webapp')]",
+        "keyVaultReferenceIdentity": "SystemAssigned"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'frontend')]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'outbound-webapp')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2022-01-01",
+      "name": "[format('pip-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static"
+      }
+    },
+    {
+      "type": "Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies",
+      "apiVersion": "2022-01-01",
+      "name": "[format('waf-policy-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "properties": {
+        "policySettings": {
+          "requestBodyCheck": true,
+          "maxRequestBodySizeInKb": 128,
+          "fileUploadLimitInMb": 100,
+          "state": "Enabled",
+          "mode": "Detection"
+        },
+        "managedRules": {
+          "managedRuleSets": [
+            {
+              "ruleSetType": "OWASP",
+              "ruleSetVersion": "3.1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/applicationGateways",
+      "apiVersion": "2022-01-01",
+      "name": "[format('agw-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "properties": {
+        "sku": {
+          "name": "WAF_v2",
+          "tier": "WAF_v2",
+          "capacity": 2
+        },
+        "gatewayIPConfigurations": [
+          {
+            "name": "appGatewayIpConfig",
+            "properties": {
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'frontend')]"
+              }
+            }
+          }
+        ],
+        "frontendIPConfigurations": [
+          {
+            "name": "appGwPublicFrontendIp",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', format('pip-{0}', parameters('workloadName')))]"
+              }
+            }
+          }
+        ],
+        "frontendPorts": [
+          {
+            "name": "http",
+            "properties": {
+              "port": 80
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "webapp",
+            "properties": {
+              "backendAddresses": [
+                {
+                  "fqdn": "[format('{0}.azurewebsites.net', format('app-{0}', parameters('workloadName')))]"
+                }
+              ]
+            }
+          }
+        ],
+        "backendHttpSettingsCollection": [
+          {
+            "name": "appGatewayBackendHttpSettings",
+            "properties": {
+              "port": 443,
+              "protocol": "Https",
+              "cookieBasedAffinity": "Disabled",
+              "pickHostNameFromBackendAddress": true,
+              "requestTimeout": 20
+            }
+          }
+        ],
+        "httpListeners": [
+          {
+            "name": "default",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', format('agw-{0}', parameters('workloadName')), 'appGwPublicFrontendIp')]"
+              },
+              "frontendPort": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts', format('agw-{0}', parameters('workloadName')), 'http')]"
+              },
+              "protocol": "Http",
+              "requireServerNameIndication": false
+            }
+          }
+        ],
+        "requestRoutingRules": [
+          {
+            "name": "http",
+            "properties": {
+              "ruleType": "Basic",
+              "priority": 10,
+              "httpListener": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', format('agw-{0}', parameters('workloadName')), 'default')]"
+              },
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', format('agw-{0}', parameters('workloadName')), 'webapp')]"
+              },
+              "backendHttpSettings": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', format('agw-{0}', parameters('workloadName')), 'appGatewayBackendHttpSettings')]"
+              }
+            }
+          }
+        ],
+        "enableHttp2": true,
+        "firewallPolicy": {
+          "id": "[resourceId('Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies', format('waf-policy-{0}', parameters('workloadName')))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies', format('waf-policy-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', format('pip-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'frontend')]",
+        "[resourceId('Microsoft.Web/sites', format('app-{0}', parameters('workloadName')))]"
+      ]
+    }
+  ]
+}
