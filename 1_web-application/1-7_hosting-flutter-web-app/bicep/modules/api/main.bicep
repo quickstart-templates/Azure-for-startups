@@ -62,6 +62,9 @@ resource subnetOutboundApim 'Microsoft.Network/virtualNetworks/subnets@2022-01-0
     addressPrefix: '10.0.3.0/24'
     privateEndpointNetworkPolicies: 'Disabled'
     privateLinkServiceNetworkPolicies: 'Enabled'
+    networkSecurityGroup: {
+      id: networkSecurityGroup.id
+    }
   }
   dependsOn: [
     subnetOutboundFunc
@@ -208,6 +211,21 @@ resource privateEndpointFuncBlobStorage 'Microsoft.Network/privateEndpoints@2022
   }
 }
 
+resource privateDnsZoneGroupBlobStorage 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-01-01' = {
+  name: 'default'
+  parent: privateEndpointFuncBlobStorage
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'config1'
+        properties: {
+          privateDnsZoneId: privateDnsZoneBlobStorage.id
+        }
+      }
+    ]
+  }
+}
+
 resource privateEndpointFuncFileStorage 'Microsoft.Network/privateEndpoints@2022-01-01' = {
   name: 'private-endpoint-${workloadName}-storage-func-file'
   location: resourceGroupLocation
@@ -226,6 +244,21 @@ resource privateEndpointFuncFileStorage 'Microsoft.Network/privateEndpoints@2022
     subnet: {
       id: subnetBackend.id
     }
+  }
+}
+
+resource privateDnsZoneGroupFileStorage 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-01-01' = {
+  name: 'default'
+  parent: privateEndpointFuncFileStorage
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'config1'
+        properties: {
+          privateDnsZoneId: privateDnsZoneFileStorage.id
+        }
+      }
+    ]
   }
 }
 
@@ -250,6 +283,21 @@ resource privateEndpointFunc 'Microsoft.Network/privateEndpoints@2022-01-01' = {
   }
 }
 
+resource privateDnsZoneGroupFunc 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-01-01' = {
+  name: 'default'
+  parent: privateEndpointFunc
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'config1'
+        properties: {
+          privateDnsZoneId: privateDnsZoneFunc.id
+        }
+      }
+    ]
+  }
+}
+
 resource storageAccountFunc 'Microsoft.Storage/storageAccounts@2022-05-01' = {
   name: 'st${uniqueString(resourceGroup().id, 'func')}'
   location: resourceGroupLocation
@@ -262,6 +310,16 @@ resource storageAccountFunc 'Microsoft.Storage/storageAccounts@2022-05-01' = {
     minimumTlsVersion: 'TLS1_2'
     supportsHttpsTrafficOnly: true
   }
+}
+
+resource storageAccountFileServiceFunc 'Microsoft.Storage/storageAccounts/fileServices@2022-05-01' = {
+  name: 'default'
+  parent: storageAccountFunc
+}
+
+resource storageAccountFileShare 'Microsoft.Storage/storageAccounts/fileServices/shares@2022-05-01' = {
+  name: functions.name
+  parent: storageAccountFileServiceFunc
 }
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
@@ -291,6 +349,22 @@ resource functions 'Microsoft.Web/sites@2022-03-01' = {
       nodeVersion: '16'
       appSettings: [
         {
+          name: 'AzureWebJobsStorage'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountFunc.name};AccountKey=${storageAccountFunc.listKeys().keys[0].value}'
+        }
+        {
+          name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountFunc.name};AccountKey=${storageAccountFunc.listKeys().keys[0].value}'
+        }
+        {
+          name: 'WEBSITE_CONTENTSHARE'
+          value: toLower('func-${workloadName}')
+        }
+        {
+          name: 'WEBSITE_CONTENTOVERVNET'
+          value: '1'
+        }
+        {
           name: 'FUNCTIONS_EXTENSION_VERSION'
           value: '~4'
         }
@@ -303,6 +377,11 @@ resource functions 'Microsoft.Web/sites@2022-03-01' = {
           value: cosmosDb.listConnectionStrings().connectionStrings[0].connectionString
         }
       ]
+      cors: {
+        allowedOrigins: [
+          'https://portal.azure.com'
+        ]
+      }
     }
     virtualNetworkSubnetId: subnetOutboundFunc.id
   }
@@ -326,6 +405,21 @@ resource privateEndpointCosmosDb 'Microsoft.Network/privateEndpoints@2022-01-01'
     subnet: {
       id: subnetBackend.id
     }
+  }
+}
+
+resource privateDnsZoneGroupCosmosDb 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-01-01' = {
+  name: 'default'
+  parent: privateEndpointCosmosDb
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'config1'
+        properties: {
+          privateDnsZoneId: privateDnsZoneCosmosDb.id
+        }
+      }
+    ]
   }
 }
 
@@ -372,15 +466,5 @@ resource apim 'Microsoft.ApiManagement/service@2021-08-01' = {
     }
     virtualNetworkType: 'External'
     publicNetworkAccess: 'Enabled'
-  }
-}
-
-resource apiBackend 'Microsoft.ApiManagement/service/backends@2021-08-01' = {
-  name: functions.name
-  parent: apim
-  properties: {
-    url: 'https://${functions.properties.defaultHostName}/api'
-    protocol: 'http'
-    resourceId: '${environment().resourceManager}${functions.id}'
   }
 }

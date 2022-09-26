@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.10.61.36676",
-      "templateHash": "15902845517045635202"
+      "templateHash": "15758095933664276632"
     }
   },
   "parameters": {
@@ -328,7 +328,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.10.61.36676",
-              "templateHash": "8510744067466133741"
+              "templateHash": "14269421954410411093"
             }
           },
           "parameters": {
@@ -567,9 +567,13 @@
               "properties": {
                 "addressPrefix": "10.0.3.0/24",
                 "privateEndpointNetworkPolicies": "Disabled",
-                "privateLinkServiceNetworkPolicies": "Enabled"
+                "privateLinkServiceNetworkPolicies": "Enabled",
+                "networkSecurityGroup": {
+                  "id": "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-{0}-outbound-apim', parameters('workloadName')))]"
+                }
               },
               "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-{0}-outbound-apim', parameters('workloadName')))]",
                 "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'outbound-func')]",
                 "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
               ]
@@ -681,6 +685,25 @@
               ]
             },
             {
+              "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+              "apiVersion": "2022-01-01",
+              "name": "[format('{0}/{1}', format('private-endpoint-{0}-storage-func-blob', parameters('workloadName')), 'default')]",
+              "properties": {
+                "privateDnsZoneConfigs": [
+                  {
+                    "name": "config1",
+                    "properties": {
+                      "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.blob.{0}', environment().suffixes.storage))]"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.blob.{0}', environment().suffixes.storage))]",
+                "[resourceId('Microsoft.Network/privateEndpoints', format('private-endpoint-{0}-storage-func-blob', parameters('workloadName')))]"
+              ]
+            },
+            {
               "type": "Microsoft.Network/privateEndpoints",
               "apiVersion": "2022-01-01",
               "name": "[format('private-endpoint-{0}-storage-func-file', parameters('workloadName'))]",
@@ -704,6 +727,25 @@
               "dependsOn": [
                 "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(resourceGroup().id, 'func')))]",
                 "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'backend')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+              "apiVersion": "2022-01-01",
+              "name": "[format('{0}/{1}', format('private-endpoint-{0}-storage-func-file', parameters('workloadName')), 'default')]",
+              "properties": {
+                "privateDnsZoneConfigs": [
+                  {
+                    "name": "config1",
+                    "properties": {
+                      "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.file.{0}', environment().suffixes.storage))]"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.file.{0}', environment().suffixes.storage))]",
+                "[resourceId('Microsoft.Network/privateEndpoints', format('private-endpoint-{0}-storage-func-file', parameters('workloadName')))]"
               ]
             },
             {
@@ -733,6 +775,25 @@
               ]
             },
             {
+              "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+              "apiVersion": "2022-01-01",
+              "name": "[format('{0}/{1}', format('private-endpoint-{0}-func', parameters('workloadName')), 'default')]",
+              "properties": {
+                "privateDnsZoneConfigs": [
+                  {
+                    "name": "config1",
+                    "properties": {
+                      "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azurewebsites.net')]"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azurewebsites.net')]",
+                "[resourceId('Microsoft.Network/privateEndpoints', format('private-endpoint-{0}-func', parameters('workloadName')))]"
+              ]
+            },
+            {
               "type": "Microsoft.Storage/storageAccounts",
               "apiVersion": "2022-05-01",
               "name": "[format('st{0}', uniqueString(resourceGroup().id, 'func'))]",
@@ -746,6 +807,23 @@
                 "minimumTlsVersion": "TLS1_2",
                 "supportsHttpsTrafficOnly": true
               }
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts/fileServices",
+              "apiVersion": "2022-05-01",
+              "name": "[format('{0}/{1}', format('st{0}', uniqueString(resourceGroup().id, 'func')), 'default')]",
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(resourceGroup().id, 'func')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+              "apiVersion": "2022-05-01",
+              "name": "[format('{0}/{1}/{2}', format('st{0}', uniqueString(resourceGroup().id, 'func')), 'default', format('func-{0}', parameters('workloadName')))]",
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', format('func-{0}', parameters('workloadName')))]",
+                "[resourceId('Microsoft.Storage/storageAccounts/fileServices', format('st{0}', uniqueString(resourceGroup().id, 'func')), 'default')]"
+              ]
             },
             {
               "type": "Microsoft.Web/serverfarms",
@@ -777,6 +855,22 @@
                   "nodeVersion": "16",
                   "appSettings": [
                     {
+                      "name": "AzureWebJobsStorage",
+                      "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', format('st{0}', uniqueString(resourceGroup().id, 'func')), listKeys(resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(resourceGroup().id, 'func'))), '2022-05-01').keys[0].value)]"
+                    },
+                    {
+                      "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                      "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', format('st{0}', uniqueString(resourceGroup().id, 'func')), listKeys(resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(resourceGroup().id, 'func'))), '2022-05-01').keys[0].value)]"
+                    },
+                    {
+                      "name": "WEBSITE_CONTENTSHARE",
+                      "value": "[toLower(format('func-{0}', parameters('workloadName')))]"
+                    },
+                    {
+                      "name": "WEBSITE_CONTENTOVERVNET",
+                      "value": "1"
+                    },
+                    {
                       "name": "FUNCTIONS_EXTENSION_VERSION",
                       "value": "~4"
                     },
@@ -788,13 +882,19 @@
                       "name": "COSMOS_DB_CONNECTION_STRING",
                       "value": "[listConnectionStrings(resourceId('Microsoft.DocumentDB/databaseAccounts', format('cosmos-{0}', parameters('workloadName'))), '2022-05-15').connectionStrings[0].connectionString]"
                     }
-                  ]
+                  ],
+                  "cors": {
+                    "allowedOrigins": [
+                      "https://portal.azure.com"
+                    ]
+                  }
                 },
                 "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'outbound-func')]"
               },
               "dependsOn": [
                 "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', parameters('workloadName')))]",
                 "[resourceId('Microsoft.DocumentDB/databaseAccounts', format('cosmos-{0}', parameters('workloadName')))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(resourceGroup().id, 'func')))]",
                 "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'outbound-func')]"
               ]
             },
@@ -822,6 +922,25 @@
               "dependsOn": [
                 "[resourceId('Microsoft.DocumentDB/databaseAccounts', format('cosmos-{0}', parameters('workloadName')))]",
                 "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'backend')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+              "apiVersion": "2022-01-01",
+              "name": "[format('{0}/{1}', format('private-endpoint-{0}-cosmos', parameters('workloadName')), 'default')]",
+              "properties": {
+                "privateDnsZoneConfigs": [
+                  {
+                    "name": "config1",
+                    "properties": {
+                      "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.documents.azure.com')]"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.documents.azure.com')]",
+                "[resourceId('Microsoft.Network/privateEndpoints', format('private-endpoint-{0}-cosmos', parameters('workloadName')))]"
               ]
             },
             {
@@ -873,20 +992,6 @@
               },
               "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'outbound-apim')]"
-              ]
-            },
-            {
-              "type": "Microsoft.ApiManagement/service/backends",
-              "apiVersion": "2021-08-01",
-              "name": "[format('{0}/{1}', format('apim-{0}', parameters('workloadName')), format('func-{0}', parameters('workloadName')))]",
-              "properties": {
-                "url": "[format('https://{0}/api', reference(resourceId('Microsoft.Web/sites', format('func-{0}', parameters('workloadName')))).defaultHostName)]",
-                "protocol": "http",
-                "resourceId": "[format('{0}{1}', environment().resourceManager, resourceId('Microsoft.Web/sites', format('func-{0}', parameters('workloadName'))))]"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.ApiManagement/service', format('apim-{0}', parameters('workloadName')))]",
-                "[resourceId('Microsoft.Web/sites', format('func-{0}', parameters('workloadName')))]"
               ]
             }
           ]
