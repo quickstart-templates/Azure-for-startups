@@ -1,0 +1,897 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.10.61.36676",
+      "templateHash": "15902845517045635202"
+    }
+  },
+  "parameters": {
+    "workloadName": {
+      "type": "string",
+      "metadata": {
+        "description": "リソース名に付与する識別用の文字列（プロジェクト名など）を入力してください"
+      }
+    },
+    "apiManagementSkuName": {
+      "type": "string",
+      "defaultValue": "Developer",
+      "allowedValues": [
+        "Basic",
+        "Consumption",
+        "Developer",
+        "Isolated",
+        "Premium",
+        "Standard"
+      ],
+      "metadata": {
+        "description": "Azure API Management の SKU 名を入力してください"
+      }
+    },
+    "apiManagementOrganizationName": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure API Management を管理する組織名を入力してください"
+      }
+    },
+    "apiManagementAdministratorEmail": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure API Management からの通知を受け取る管理者のメールアドレスを入力してください"
+      }
+    },
+    "appServicePlanSkuCode": {
+      "type": "string",
+      "defaultValue": "P1v2",
+      "allowedValues": [
+        "B1",
+        "B2",
+        "B3",
+        "S1",
+        "S2",
+        "S3",
+        "P1v2",
+        "P2v2",
+        "P3v2",
+        "P1v3",
+        "P2v3",
+        "P3v3"
+      ],
+      "metadata": {
+        "description": "Azure App Service Plan のプランを選択してください"
+      }
+    },
+    "storageAccountSkuCode": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Premium_LRS",
+        "Premium_ZRS",
+        "Standard_GRS",
+        "Standard_GZRS",
+        "Standard_LRS",
+        "Standard_RAGRS",
+        "Standard_RAGZRS",
+        "Standard_ZRS"
+      ],
+      "metadata": {
+        "description": "Azure Storage Account の SKU を選択してください"
+      }
+    },
+    "cosmosDbLocation": {
+      "type": "string",
+      "defaultValue": "Korea Central",
+      "allowedValues": [
+        "Brazil Southeast",
+        "Central US",
+        "Australia Southeast",
+        "Canada Central",
+        "Central India",
+        "Southeast Asia",
+        "Switzerland North",
+        "UAE North",
+        "East Asia",
+        "UK West",
+        "Switzerland West",
+        "West Europe",
+        "East US 2",
+        "West US",
+        "East US",
+        "West US 3",
+        "Australia East",
+        "Brazil South",
+        "Germany West Central",
+        "France Central",
+        "Japan East",
+        "Japan West",
+        "Korea South",
+        "Germany North",
+        "France South",
+        "Australia Central",
+        "South Central US",
+        "South Africa North",
+        "Korea Central",
+        "South India",
+        "Norway East",
+        "Canada East",
+        "North Central US",
+        "Norway West",
+        "North Europe",
+        "South Africa West",
+        "Australia Central 2",
+        "UAE Central",
+        "UK South",
+        "West Central US",
+        "West India",
+        "West US 2",
+        "Jio India West",
+        "Jio India Central",
+        "Sweden Central",
+        "Sweden South",
+        "Qatar Central"
+      ],
+      "metadata": {
+        "description": "Azure Cosmos DB のロケーションを選択してください（状況によって利用できないリージョンがあります）"
+      }
+    },
+    "cosmosDbEnableFreeTier": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Azure Cosmos DB の無料利用枠を利用するか否かを選択してください"
+      }
+    }
+  },
+  "variables": {
+    "resourceGroupLocation": "[resourceGroup().location]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "deployment-app",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "workloadName": {
+            "value": "[parameters('workloadName')]"
+          },
+          "resourceGroupLocation": {
+            "value": "[variables('resourceGroupLocation')]"
+          },
+          "storageAccountSkuCode": {
+            "value": "[parameters('storageAccountSkuCode')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.10.61.36676",
+              "templateHash": "14287320012594100449"
+            }
+          },
+          "parameters": {
+            "workloadName": {
+              "type": "string"
+            },
+            "resourceGroupLocation": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            },
+            "storageAccountSkuCode": {
+              "type": "string",
+              "defaultValue": "Standard_LRS",
+              "allowedValues": [
+                "Premium_LRS",
+                "Premium_ZRS",
+                "Standard_GRS",
+                "Standard_GZRS",
+                "Standard_LRS",
+                "Standard_RAGRS",
+                "Standard_RAGZRS",
+                "Standard_ZRS"
+              ]
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+              "apiVersion": "2022-05-01",
+              "name": "[format('{0}/{1}/{2}', format('st{0}', uniqueString(resourceGroup().id, 'contents')), 'default', 'contents')]",
+              "properties": {
+                "publicAccess": "Blob"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices', format('st{0}', uniqueString(resourceGroup().id, 'contents')), 'default')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts/blobServices",
+              "apiVersion": "2022-05-01",
+              "name": "[format('{0}/{1}', format('st{0}', uniqueString(resourceGroup().id, 'contents')), 'default')]",
+              "properties": {},
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(resourceGroup().id, 'contents')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2022-05-01",
+              "name": "[format('st{0}', uniqueString(resourceGroup().id, 'contents'))]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "sku": {
+                "name": "[parameters('storageAccountSkuCode')]"
+              },
+              "kind": "StorageV2",
+              "properties": {
+                "minimumTlsVersion": "TLS1_2",
+                "supportsHttpsTrafficOnly": true
+              }
+            },
+            {
+              "type": "Microsoft.Cdn/profiles",
+              "apiVersion": "2021-06-01",
+              "name": "[format('cdn-{0}', parameters('workloadName'))]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "sku": {
+                "name": "Standard_Verizon"
+              },
+              "properties": {}
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/endpoints",
+              "apiVersion": "2021-06-01",
+              "name": "[format('{0}/{1}', format('cdn-{0}', parameters('workloadName')), format('cdne-{0}', parameters('workloadName')))]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "properties": {
+                "originHostHeader": "[format('{0}.blob.{1}', format('st{0}', uniqueString(resourceGroup().id, 'contents')), environment().suffixes.storage)]",
+                "originPath": "/contents",
+                "contentTypesToCompress": [
+                  "text/plain",
+                  "text/html",
+                  "text/css",
+                  "application/x-javascript",
+                  "text/javascript"
+                ],
+                "isCompressionEnabled": true,
+                "isHttpAllowed": true,
+                "isHttpsAllowed": true,
+                "queryStringCachingBehavior": "IgnoreQueryString",
+                "origins": [
+                  {
+                    "name": "origin1",
+                    "properties": {
+                      "hostName": "[format('{0}.blob.{1}', format('st{0}', uniqueString(resourceGroup().id, 'contents')), environment().suffixes.storage)]"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles', format('cdn-{0}', parameters('workloadName')))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(resourceGroup().id, 'contents')))]"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "deployment-api",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "workloadName": {
+            "value": "[parameters('workloadName')]"
+          },
+          "resourceGroupLocation": {
+            "value": "[variables('resourceGroupLocation')]"
+          },
+          "apimSkuName": {
+            "value": "[parameters('apiManagementSkuName')]"
+          },
+          "apimOrganizationName": {
+            "value": "[parameters('apiManagementOrganizationName')]"
+          },
+          "apimAdministratorEmail": {
+            "value": "[parameters('apiManagementAdministratorEmail')]"
+          },
+          "appServicePlanSkuCode": {
+            "value": "[parameters('appServicePlanSkuCode')]"
+          },
+          "storageAccountSkuCode": {
+            "value": "[parameters('storageAccountSkuCode')]"
+          },
+          "cosmosDbLocation": {
+            "value": "[parameters('cosmosDbLocation')]"
+          },
+          "cosmosDbEnableFreeTier": {
+            "value": "[parameters('cosmosDbEnableFreeTier')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.10.61.36676",
+              "templateHash": "8510744067466133741"
+            }
+          },
+          "parameters": {
+            "workloadName": {
+              "type": "string"
+            },
+            "resourceGroupLocation": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            },
+            "apimSkuName": {
+              "type": "string",
+              "defaultValue": "Developer",
+              "allowedValues": [
+                "Basic",
+                "Consumption",
+                "Developer",
+                "Isolated",
+                "Premium",
+                "Standard"
+              ]
+            },
+            "apimOrganizationName": {
+              "type": "string"
+            },
+            "apimAdministratorEmail": {
+              "type": "string"
+            },
+            "appServicePlanSkuCode": {
+              "type": "string",
+              "defaultValue": "P1v2",
+              "allowedValues": [
+                "B1",
+                "B2",
+                "B3",
+                "S1",
+                "S2",
+                "S3",
+                "P1v2",
+                "P2v2",
+                "P3v2",
+                "P1v3",
+                "P2v3",
+                "P3v3"
+              ]
+            },
+            "storageAccountSkuCode": {
+              "type": "string",
+              "defaultValue": "Standard_LRS",
+              "allowedValues": [
+                "Premium_LRS",
+                "Premium_ZRS",
+                "Standard_GRS",
+                "Standard_GZRS",
+                "Standard_LRS",
+                "Standard_RAGRS",
+                "Standard_RAGZRS",
+                "Standard_ZRS"
+              ]
+            },
+            "cosmosDbLocation": {
+              "type": "string",
+              "defaultValue": "Korea Central",
+              "allowedValues": [
+                "Brazil Southeast",
+                "Central US",
+                "Australia Southeast",
+                "Canada Central",
+                "Central India",
+                "Southeast Asia",
+                "Switzerland North",
+                "UAE North",
+                "East Asia",
+                "UK West",
+                "Switzerland West",
+                "West Europe",
+                "East US 2",
+                "West US",
+                "East US",
+                "West US 3",
+                "Australia East",
+                "Brazil South",
+                "Germany West Central",
+                "France Central",
+                "Japan East",
+                "Japan West",
+                "Korea South",
+                "Germany North",
+                "France South",
+                "Australia Central",
+                "South Central US",
+                "South Africa North",
+                "Korea Central",
+                "South India",
+                "Norway East",
+                "Canada East",
+                "North Central US",
+                "Norway West",
+                "North Europe",
+                "South Africa West",
+                "Australia Central 2",
+                "UAE Central",
+                "UK South",
+                "West Central US",
+                "West India",
+                "West US 2",
+                "Jio India West",
+                "Jio India Central",
+                "Sweden Central",
+                "Sweden South",
+                "Qatar Central"
+              ]
+            },
+            "cosmosDbEnableFreeTier": {
+              "type": "bool",
+              "defaultValue": false
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', format('privatelink.blob.{0}', environment().suffixes.storage), format('link-{0}-storage-blob', parameters('workloadName')))]",
+              "location": "global",
+              "properties": {
+                "registrationEnabled": false,
+                "virtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.blob.{0}', environment().suffixes.storage))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', format('privatelink.file.{0}', environment().suffixes.storage), format('link-{0}-storage-file', parameters('workloadName')))]",
+              "location": "global",
+              "properties": {
+                "registrationEnabled": false,
+                "virtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.file.{0}', environment().suffixes.storage))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', 'privatelink.azurewebsites.net', format('link-{0}-func', parameters('workloadName')))]",
+              "location": "global",
+              "properties": {
+                "registrationEnabled": false,
+                "virtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azurewebsites.net')]",
+                "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', 'privatelink.documents.azure.com', format('link-{0}-cosmos', parameters('workloadName')))]",
+              "location": "global",
+              "properties": {
+                "registrationEnabled": true,
+                "virtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.documents.azure.com')]",
+                "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2022-01-01",
+              "name": "[format('vnet-{0}', parameters('workloadName'))]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "10.0.0.0/16"
+                  ]
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks/subnets",
+              "apiVersion": "2022-01-01",
+              "name": "[format('{0}/{1}', format('vnet-{0}', parameters('workloadName')), 'backend')]",
+              "properties": {
+                "addressPrefix": "10.0.1.0/24",
+                "privateEndpointNetworkPolicies": "Disabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks/subnets",
+              "apiVersion": "2022-01-01",
+              "name": "[format('{0}/{1}', format('vnet-{0}', parameters('workloadName')), 'outbound-func')]",
+              "properties": {
+                "addressPrefix": "10.0.2.0/24",
+                "delegations": [
+                  {
+                    "name": "delegation",
+                    "properties": {
+                      "serviceName": "Microsoft.Web/serverFarms"
+                    }
+                  }
+                ],
+                "privateEndpointNetworkPolicies": "Disabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'backend')]",
+                "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks/subnets",
+              "apiVersion": "2022-01-01",
+              "name": "[format('{0}/{1}', format('vnet-{0}', parameters('workloadName')), 'outbound-apim')]",
+              "properties": {
+                "addressPrefix": "10.0.3.0/24",
+                "privateEndpointNetworkPolicies": "Disabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'outbound-func')]",
+                "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones",
+              "apiVersion": "2020-06-01",
+              "name": "[format('privatelink.blob.{0}', environment().suffixes.storage)]",
+              "location": "global",
+              "properties": {}
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones",
+              "apiVersion": "2020-06-01",
+              "name": "[format('privatelink.file.{0}', environment().suffixes.storage)]",
+              "location": "global",
+              "properties": {}
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones",
+              "apiVersion": "2020-06-01",
+              "name": "privatelink.azurewebsites.net",
+              "location": "global",
+              "properties": {}
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones",
+              "apiVersion": "2020-06-01",
+              "name": "privatelink.documents.azure.com",
+              "location": "global",
+              "properties": {}
+            },
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2022-01-01",
+              "name": "[format('nsg-{0}-outbound-apim', parameters('workloadName'))]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "properties": {
+                "securityRules": [
+                  {
+                    "name": "ManagementForPortalAndPowerShell",
+                    "properties": {
+                      "description": "Management endpoint for Azure portal and PowerShell",
+                      "protocol": "TCP",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "3443",
+                      "sourceAddressPrefix": "ApiManagement",
+                      "destinationAddressPrefix": "VirtualNetwork",
+                      "access": "Allow",
+                      "priority": 110,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "AllowTagHTTPSInbound",
+                    "properties": {
+                      "description": "Client communication to API Management",
+                      "protocol": "TCP",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "443",
+                      "sourceAddressPrefix": "Internet",
+                      "destinationAddressPrefix": "VirtualNetwork",
+                      "access": "Allow",
+                      "priority": 100,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "AllowTagHTTPSOutbound",
+                    "properties": {
+                      "description": "Dependency on Azure Storage",
+                      "protocol": "TCP",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "443",
+                      "sourceAddressPrefix": "VirtualNetwork",
+                      "destinationAddressPrefix": "Storage",
+                      "access": "Allow",
+                      "priority": 110,
+                      "direction": "Outbound"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Network/privateEndpoints",
+              "apiVersion": "2022-01-01",
+              "name": "[format('private-endpoint-{0}-storage-func-blob', parameters('workloadName'))]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "properties": {
+                "privateLinkServiceConnections": [
+                  {
+                    "name": "blob",
+                    "properties": {
+                      "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(resourceGroup().id, 'func')))]",
+                      "groupIds": [
+                        "blob"
+                      ]
+                    }
+                  }
+                ],
+                "subnet": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'backend')]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(resourceGroup().id, 'func')))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'backend')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateEndpoints",
+              "apiVersion": "2022-01-01",
+              "name": "[format('private-endpoint-{0}-storage-func-file', parameters('workloadName'))]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "properties": {
+                "privateLinkServiceConnections": [
+                  {
+                    "name": "file",
+                    "properties": {
+                      "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(resourceGroup().id, 'func')))]",
+                      "groupIds": [
+                        "file"
+                      ]
+                    }
+                  }
+                ],
+                "subnet": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'backend')]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(resourceGroup().id, 'func')))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'backend')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateEndpoints",
+              "apiVersion": "2022-01-01",
+              "name": "[format('private-endpoint-{0}-func', parameters('workloadName'))]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "properties": {
+                "privateLinkServiceConnections": [
+                  {
+                    "name": "sites",
+                    "properties": {
+                      "privateLinkServiceId": "[resourceId('Microsoft.Web/sites', format('func-{0}', parameters('workloadName')))]",
+                      "groupIds": [
+                        "sites"
+                      ]
+                    }
+                  }
+                ],
+                "subnet": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'backend')]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', format('func-{0}', parameters('workloadName')))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'backend')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2022-05-01",
+              "name": "[format('st{0}', uniqueString(resourceGroup().id, 'func'))]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "sku": {
+                "name": "[parameters('storageAccountSkuCode')]"
+              },
+              "kind": "StorageV2",
+              "properties": {
+                "publicNetworkAccess": "Disabled",
+                "minimumTlsVersion": "TLS1_2",
+                "supportsHttpsTrafficOnly": true
+              }
+            },
+            {
+              "type": "Microsoft.Web/serverfarms",
+              "apiVersion": "2022-03-01",
+              "name": "[format('plan-{0}', parameters('workloadName'))]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "sku": {
+                "name": "[parameters('appServicePlanSkuCode')]"
+              },
+              "kind": "app",
+              "properties": {}
+            },
+            {
+              "type": "Microsoft.Web/sites",
+              "apiVersion": "2022-03-01",
+              "name": "[format('func-{0}', parameters('workloadName'))]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "kind": "functionapp",
+              "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', parameters('workloadName')))]",
+                "httpsOnly": true,
+                "vnetRouteAllEnabled": true,
+                "vnetContentShareEnabled": true,
+                "siteConfig": {
+                  "alwaysOn": true,
+                  "minTlsVersion": "1.2",
+                  "ftpsState": "Disabled",
+                  "http20Enabled": true,
+                  "nodeVersion": "16",
+                  "appSettings": [
+                    {
+                      "name": "FUNCTIONS_EXTENSION_VERSION",
+                      "value": "~4"
+                    },
+                    {
+                      "name": "FUNCTIONS_WORKER_RUNTIME",
+                      "value": "node"
+                    },
+                    {
+                      "name": "COSMOS_DB_CONNECTION_STRING",
+                      "value": "[listConnectionStrings(resourceId('Microsoft.DocumentDB/databaseAccounts', format('cosmos-{0}', parameters('workloadName'))), '2022-05-15').connectionStrings[0].connectionString]"
+                    }
+                  ]
+                },
+                "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'outbound-func')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', parameters('workloadName')))]",
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts', format('cosmos-{0}', parameters('workloadName')))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'outbound-func')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateEndpoints",
+              "apiVersion": "2022-01-01",
+              "name": "[format('private-endpoint-{0}-cosmos', parameters('workloadName'))]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "properties": {
+                "privateLinkServiceConnections": [
+                  {
+                    "name": "cosmosdb",
+                    "properties": {
+                      "privateLinkServiceId": "[resourceId('Microsoft.DocumentDB/databaseAccounts', format('cosmos-{0}', parameters('workloadName')))]",
+                      "groupIds": [
+                        "sql"
+                      ]
+                    }
+                  }
+                ],
+                "subnet": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'backend')]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts', format('cosmos-{0}', parameters('workloadName')))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'backend')]"
+              ]
+            },
+            {
+              "type": "Microsoft.DocumentDB/databaseAccounts",
+              "apiVersion": "2022-05-15",
+              "name": "[format('cosmos-{0}', parameters('workloadName'))]",
+              "location": "[parameters('cosmosDbLocation')]",
+              "kind": "GlobalDocumentDB",
+              "properties": {
+                "publicNetworkAccess": "Disabled",
+                "enableFreeTier": "[parameters('cosmosDbEnableFreeTier')]",
+                "databaseAccountOfferType": "Standard",
+                "consistencyPolicy": {
+                  "defaultConsistencyLevel": "Session",
+                  "maxStalenessPrefix": 100,
+                  "maxIntervalInSeconds": 5
+                },
+                "locations": [
+                  {
+                    "locationName": "[parameters('cosmosDbLocation')]",
+                    "failoverPriority": 0,
+                    "isZoneRedundant": false
+                  }
+                ],
+                "capabilities": [
+                  {
+                    "name": "EnableServerless"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.ApiManagement/service",
+              "apiVersion": "2021-08-01",
+              "name": "[format('apim-{0}', parameters('workloadName'))]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "sku": {
+                "name": "[parameters('apimSkuName')]",
+                "capacity": "[if(equals(parameters('apimSkuName'), 'Consumption'), 0, 1)]"
+              },
+              "properties": {
+                "publisherName": "[parameters('apimOrganizationName')]",
+                "publisherEmail": "[parameters('apimAdministratorEmail')]",
+                "virtualNetworkConfiguration": {
+                  "subnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'outbound-apim')]"
+                },
+                "virtualNetworkType": "External",
+                "publicNetworkAccess": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'outbound-apim')]"
+              ]
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/backends",
+              "apiVersion": "2021-08-01",
+              "name": "[format('{0}/{1}', format('apim-{0}', parameters('workloadName')), format('func-{0}', parameters('workloadName')))]",
+              "properties": {
+                "url": "[format('https://{0}/api', reference(resourceId('Microsoft.Web/sites', format('func-{0}', parameters('workloadName')))).defaultHostName)]",
+                "protocol": "http",
+                "resourceId": "[format('{0}{1}', environment().resourceManager, resourceId('Microsoft.Web/sites', format('func-{0}', parameters('workloadName'))))]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', format('apim-{0}', parameters('workloadName')))]",
+                "[resourceId('Microsoft.Web/sites', format('func-{0}', parameters('workloadName')))]"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
