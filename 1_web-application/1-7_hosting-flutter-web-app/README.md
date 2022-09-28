@@ -27,6 +27,10 @@ Flutter を使用して作成した Web アプリを公開する際の構成例�
 
 なお、本構成の Azure Functions は、Node.js v16 で構成しています。
 
+また、Azure AD は統合的なサービスなのでリソース作成は行いません。アプリケーションへ認証機構を導入するなどについては下記をご参照ください。
+
+- [Microsoft ID プラットフォームのドキュメント - Microsoft Entra | Microsoft Docs](https://docs.microsoft.com/ja-jp/azure/active-directory/develop/)
+
 
 ## 利用方法
 
