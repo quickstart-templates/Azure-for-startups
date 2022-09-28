@@ -344,6 +344,21 @@ resource privateEndpointBlobStorage 'Microsoft.Network/privateEndpoints@2022-01-
   }
 }
 
+resource privateDnsZoneGroupBlobStorage 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-01-01' = {
+  name: 'default'
+  parent: privateEndpointBlobStorage
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'config1'
+        properties: {
+          privateDnsZoneId: privateDnsZoneBlobStorage.id
+        }
+      }
+    ]
+  }
+}
+
 resource cosmosDb 'Microsoft.DocumentDB/databaseAccounts@2022-05-15' = {
   name: 'cosmos-${workloadName}'
   location: cosmosDbLocation
@@ -393,6 +408,21 @@ resource privateEndpointCosmosDb 'Microsoft.Network/privateEndpoints@2022-01-01'
   }
 }
 
+resource privateDnsZoneGroupCosmosDb 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-01-01' = {
+  name: 'default'
+  parent: privateEndpointCosmosDb
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'config1'
+        properties: {
+          privateDnsZoneId: privateDnsZoneCosmosDb.id
+        }
+      }
+    ]
+  }
+}
+
 resource postgreSql 'Microsoft.DBforPostgreSQL/servers@2017-12-01' = {
   name: 'psql-${workloadName}'
   location: resourceGroupLocation
@@ -427,5 +457,20 @@ resource privateEndpointPostgreSql 'Microsoft.Network/privateEndpoints@2022-01-0
     subnet: {
       id: virtualNetwork::subnetBackend.id
     }
+  }
+}
+
+resource privateDnsZoneGroupPostgreSql 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-01-01' = {
+  name: 'default'
+  parent: privateEndpointPostgreSql
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'config1'
+        properties: {
+          privateDnsZoneId: privateDnsZonePostgreSql.id
+        }
+      }
+    ]
   }
 }
