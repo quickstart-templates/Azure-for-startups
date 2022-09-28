@@ -346,7 +346,6 @@ resource functions 'Microsoft.Web/sites@2022-03-01' = {
       minTlsVersion: '1.2'
       ftpsState: 'Disabled'
       http20Enabled: true
-      nodeVersion: '16'
       appSettings: [
         {
           name: 'AzureWebJobsStorage'
@@ -371,6 +370,10 @@ resource functions 'Microsoft.Web/sites@2022-03-01' = {
         {
           name: 'FUNCTIONS_WORKER_RUNTIME'
           value: 'node'
+        }
+        {
+          name: 'WEBSITE_NODE_DEFAULT_VERSION'
+          value: '~16'
         }
         {
           name: 'COSMOS_DB_CONNECTION_STRING'
