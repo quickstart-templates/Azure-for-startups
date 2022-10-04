@@ -1,0 +1,393 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.10.61.36676",
+      "templateHash": "6255519640411857782"
+    }
+  },
+  "parameters": {
+    "workloadName": {
+      "type": "string",
+      "metadata": {
+        "description": "リソース名に付与する識別用の文字列（プロジェクト名など）を入力してください"
+      }
+    },
+    "cosmosDbLocation": {
+      "type": "string",
+      "defaultValue": "Korea Central",
+      "allowedValues": [
+        "Brazil Southeast",
+        "Central US",
+        "Australia Southeast",
+        "Canada Central",
+        "Central India",
+        "Southeast Asia",
+        "Switzerland North",
+        "UAE North",
+        "East Asia",
+        "UK West",
+        "Switzerland West",
+        "West Europe",
+        "East US 2",
+        "West US",
+        "East US",
+        "West US 3",
+        "Australia East",
+        "Brazil South",
+        "Germany West Central",
+        "France Central",
+        "Japan East",
+        "Japan West",
+        "Korea South",
+        "Germany North",
+        "France South",
+        "Australia Central",
+        "South Central US",
+        "South Africa North",
+        "Korea Central",
+        "South India",
+        "Norway East",
+        "Canada East",
+        "North Central US",
+        "Norway West",
+        "North Europe",
+        "South Africa West",
+        "Australia Central 2",
+        "UAE Central",
+        "UK South",
+        "West Central US",
+        "West India",
+        "West US 2",
+        "Jio India West",
+        "Jio India Central",
+        "Sweden Central",
+        "Sweden South",
+        "Qatar Central"
+      ],
+      "metadata": {
+        "description": "Azure Cosmos DB のロケーションを選択してください（状況によって利用できないリージョンがあります）"
+      }
+    },
+    "cosmosDbEnableFreeTier": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Azure Cosmos DB の無料利用枠を利用するか否かを選択してください"
+      }
+    }
+  },
+  "variables": {
+    "resourceGroupLocation": "[resourceGroup().location]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', 'privatelink.azurecr.io', format('link-{0}-container-registry', parameters('workloadName')))]",
+      "location": "global",
+      "properties": {
+        "registrationEnabled": false,
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azurecr.io')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', 'privatelink.documents.azure.com', format('link-{0}-cosmos', parameters('workloadName')))]",
+      "location": "global",
+      "properties": {
+        "registrationEnabled": false,
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.documents.azure.com')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2022-01-01",
+      "name": "[format('vnet-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2022-01-01",
+      "name": "[format('{0}/{1}', format('vnet-{0}', parameters('workloadName')), 'frontend')]",
+      "properties": {
+        "addressPrefix": "10.0.0.0/24",
+        "privateEndpointNetworkPolicies": "Disabled",
+        "privateLinkServiceNetworkPolicies": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2022-01-01",
+      "name": "[format('{0}/{1}', format('vnet-{0}', parameters('workloadName')), 'backend')]",
+      "properties": {
+        "addressPrefix": "10.0.1.0/24",
+        "privateEndpointNetworkPolicies": "Disabled",
+        "privateLinkServiceNetworkPolicies": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'frontend')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2022-01-01",
+      "name": "[format('{0}/{1}', format('vnet-{0}', parameters('workloadName')), 'container-apps-environment')]",
+      "properties": {
+        "addressPrefix": "10.0.254.0/23",
+        "privateEndpointNetworkPolicies": "Disabled",
+        "privateLinkServiceNetworkPolicies": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'backend')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2020-06-01",
+      "name": "privatelink.azurecr.io",
+      "location": "global",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2022-01-01",
+      "name": "[format('private-endpoint-{0}-container-registry', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "properties": {
+        "privateLinkServiceConnections": [
+          {
+            "name": "registry",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.ContainerRegistry/registries', format('cr{0}', join(split(parameters('workloadName'), '-'), '')))]",
+              "groupIds": [
+                "registry"
+              ]
+            }
+          }
+        ],
+        "subnet": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'frontend')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries', format('cr{0}', join(split(parameters('workloadName'), '-'), '')))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'frontend')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2022-01-01",
+      "name": "[format('{0}/{1}', format('private-endpoint-{0}-container-registry', parameters('workloadName')), 'default')]",
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "config1",
+            "properties": {
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azurecr.io')]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azurecr.io')]",
+        "[resourceId('Microsoft.Network/privateEndpoints', format('private-endpoint-{0}-container-registry', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ContainerRegistry/registries",
+      "apiVersion": "2021-06-01-preview",
+      "name": "[format('cr{0}', join(split(parameters('workloadName'), '-'), ''))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "sku": {
+        "name": "Premium"
+      },
+      "properties": {
+        "adminUserEnabled": true,
+        "publicNetworkAccess": "Disabled",
+        "networkRuleBypassOptions": "AzureServices",
+        "zoneRedundancy": "Disabled",
+        "anonymousPullEnabled": false
+      }
+    },
+    {
+      "type": "Microsoft.App/managedEnvironments",
+      "apiVersion": "2022-03-01",
+      "name": "[format('container-apps-environment-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "properties": {
+        "vnetConfiguration": {
+          "internal": false,
+          "infrastructureSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'container-apps-environment')]"
+        },
+        "appLogsConfiguration": {
+          "destination": "log-analytics",
+          "logAnalyticsConfiguration": {
+            "customerId": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', format('log-{0}', parameters('workloadName')))).customerId]",
+            "sharedKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', format('log-{0}', parameters('workloadName'))), '2021-06-01').primarySharedKey]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', format('log-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'container-apps-environment')]"
+      ]
+    },
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2021-06-01",
+      "name": "[format('log-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "properties": {
+        "sku": {
+          "name": "PerGB2018"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.App/containerApps",
+      "apiVersion": "2022-03-01",
+      "name": "[format('app-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "properties": {
+        "managedEnvironmentId": "[resourceId('Microsoft.App/managedEnvironments', format('container-apps-environment-{0}', parameters('workloadName')))]",
+        "configuration": {
+          "ingress": {
+            "external": true,
+            "targetPort": 80,
+            "transport": "auto",
+            "traffic": [
+              {
+                "weight": 100,
+                "latestRevision": true
+              }
+            ]
+          }
+        },
+        "template": {
+          "containers": [
+            {
+              "image": "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest",
+              "name": "simple-hello-world-container",
+              "resources": {
+                "cpu": "[json('0.25')]",
+                "memory": "0.5Gi"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.App/managedEnvironments', format('container-apps-environment-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2020-06-01",
+      "name": "privatelink.documents.azure.com",
+      "location": "global",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2022-01-01",
+      "name": "[format('private-endpoint-{0}-cosmos', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "properties": {
+        "privateLinkServiceConnections": [
+          {
+            "name": "cosmosdb",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.DocumentDB/databaseAccounts', format('cosmos-{0}', parameters('workloadName')))]",
+              "groupIds": [
+                "sql"
+              ]
+            }
+          }
+        ],
+        "subnet": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'backend')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', format('cosmos-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', parameters('workloadName')), 'backend')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2022-01-01",
+      "name": "[format('{0}/{1}', format('private-endpoint-{0}-cosmos', parameters('workloadName')), 'default')]",
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "config1",
+            "properties": {
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.documents.azure.com')]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.documents.azure.com')]",
+        "[resourceId('Microsoft.Network/privateEndpoints', format('private-endpoint-{0}-cosmos', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "apiVersion": "2022-05-15",
+      "name": "[format('cosmos-{0}', parameters('workloadName'))]",
+      "location": "[parameters('cosmosDbLocation')]",
+      "kind": "GlobalDocumentDB",
+      "properties": {
+        "publicNetworkAccess": "Disabled",
+        "enableFreeTier": "[parameters('cosmosDbEnableFreeTier')]",
+        "databaseAccountOfferType": "Standard",
+        "consistencyPolicy": {
+          "defaultConsistencyLevel": "Session",
+          "maxStalenessPrefix": 100,
+          "maxIntervalInSeconds": 5
+        },
+        "locations": [
+          {
+            "locationName": "[parameters('cosmosDbLocation')]",
+            "failoverPriority": 0,
+            "isZoneRedundant": false
+          }
+        ],
+        "capabilities": [
+          {
+            "name": "EnableServerless"
+          }
+        ]
+      }
+    }
+  ]
+}
