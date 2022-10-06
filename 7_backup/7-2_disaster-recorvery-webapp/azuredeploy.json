@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.10.61.36676",
-      "templateHash": "15978960012205265282"
+      "templateHash": "7509437067401665737"
     }
   },
   "parameters": {
@@ -105,7 +105,7 @@
     },
     "regionSub": {
       "type": "string",
-      "defaultValue": "Japan West",
+      "defaultValue": "Korea Central",
       "allowedValues": [
         "East US",
         "East US 2",

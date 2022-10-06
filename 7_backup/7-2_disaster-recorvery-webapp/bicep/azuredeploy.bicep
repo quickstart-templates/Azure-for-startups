@@ -7,7 +7,7 @@ param regionMain string = 'Japan East'
 
 @description('サブリージョンを選択してください')
 @allowed(['East US', 'East US 2', 'South Central US', 'West US 2', 'West US 3', 'Australia East', 'Southeast Asia', 'North Europe', 'Sweden Central', 'UK South', 'West Europe', 'Central US', 'South Africa North', 'Central India', 'East Asia', 'Japan East', 'Korea Central', 'Canada Central', 'France Central', 'Germany West Central', 'Norway East', 'Switzerland North', 'UAE North', 'Brazil South', 'East US 2 EUAP', 'Qatar Central', 'Central US (Stage)', 'East US (Stage)', 'East US 2 (Stage)', 'North Central US (Stage)', 'South Central US (Stage)', 'West US (Stage)', 'West US 2 (Stage)', 'Asia', 'Asia Pacific', 'Australia', 'Brazil', 'Canada', 'Europe', 'France', 'Germany', 'Global', 'India', 'Japan', 'Korea', 'Norway', 'Singapore', 'South Africa', 'Switzerland', 'United Arab Emirates', 'United Kingdom', 'United States', 'United States EUAP', 'East Asia (Stage)', 'Southeast Asia (Stage)', 'East US STG', 'South Central US STG', 'North Central US', 'West US', 'Jio India West', 'Central US EUAP', 'West Central US', 'South Africa West', 'Australia Central', 'Australia Central 2', 'Australia Southeast', 'Japan West', 'Jio India Central', 'Korea South', 'South India', 'West India', 'Canada East', 'France South', 'Germany North', 'Norway West', 'Switzerland West', 'UK West', 'UAE Central', 'Brazil Southeast'])
-param regionSub string = 'Japan West'
+param regionSub string = 'Korea Central'
 
 @description('Azure App Service Plan のプランを選択してください')
 @allowed(['F1', 'B1', 'B2', 'B3', 'D1', 'S1', 'S2', 'S3', 'Y1', 'P1v2', 'P2v2', 'P3v2', 'P1v3', 'P2v3', 'P3v3'])
