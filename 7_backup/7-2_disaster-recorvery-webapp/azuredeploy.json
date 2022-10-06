@@ -1,0 +1,892 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.10.61.36676",
+      "templateHash": "15978960012205265282"
+    }
+  },
+  "parameters": {
+    "workloadName": {
+      "type": "string",
+      "metadata": {
+        "description": "リソース名に付与する識別用の文字列（プロジェクト名など）を入力してください"
+      }
+    },
+    "regionMain": {
+      "type": "string",
+      "defaultValue": "Japan East",
+      "allowedValues": [
+        "East US",
+        "East US 2",
+        "South Central US",
+        "West US 2",
+        "West US 3",
+        "Australia East",
+        "Southeast Asia",
+        "North Europe",
+        "Sweden Central",
+        "UK South",
+        "West Europe",
+        "Central US",
+        "South Africa North",
+        "Central India",
+        "East Asia",
+        "Japan East",
+        "Korea Central",
+        "Canada Central",
+        "France Central",
+        "Germany West Central",
+        "Norway East",
+        "Switzerland North",
+        "UAE North",
+        "Brazil South",
+        "East US 2 EUAP",
+        "Qatar Central",
+        "Central US (Stage)",
+        "East US (Stage)",
+        "East US 2 (Stage)",
+        "North Central US (Stage)",
+        "South Central US (Stage)",
+        "West US (Stage)",
+        "West US 2 (Stage)",
+        "Asia",
+        "Asia Pacific",
+        "Australia",
+        "Brazil",
+        "Canada",
+        "Europe",
+        "France",
+        "Germany",
+        "Global",
+        "India",
+        "Japan",
+        "Korea",
+        "Norway",
+        "Singapore",
+        "South Africa",
+        "Switzerland",
+        "United Arab Emirates",
+        "United Kingdom",
+        "United States",
+        "United States EUAP",
+        "East Asia (Stage)",
+        "Southeast Asia (Stage)",
+        "East US STG",
+        "South Central US STG",
+        "North Central US",
+        "West US",
+        "Jio India West",
+        "Central US EUAP",
+        "West Central US",
+        "South Africa West",
+        "Australia Central",
+        "Australia Central 2",
+        "Australia Southeast",
+        "Japan West",
+        "Jio India Central",
+        "Korea South",
+        "South India",
+        "West India",
+        "Canada East",
+        "France South",
+        "Germany North",
+        "Norway West",
+        "Switzerland West",
+        "UK West",
+        "UAE Central",
+        "Brazil Southeast"
+      ],
+      "metadata": {
+        "description": "メインリージョンを選択してください"
+      }
+    },
+    "regionSub": {
+      "type": "string",
+      "defaultValue": "Japan West",
+      "allowedValues": [
+        "East US",
+        "East US 2",
+        "South Central US",
+        "West US 2",
+        "West US 3",
+        "Australia East",
+        "Southeast Asia",
+        "North Europe",
+        "Sweden Central",
+        "UK South",
+        "West Europe",
+        "Central US",
+        "South Africa North",
+        "Central India",
+        "East Asia",
+        "Japan East",
+        "Korea Central",
+        "Canada Central",
+        "France Central",
+        "Germany West Central",
+        "Norway East",
+        "Switzerland North",
+        "UAE North",
+        "Brazil South",
+        "East US 2 EUAP",
+        "Qatar Central",
+        "Central US (Stage)",
+        "East US (Stage)",
+        "East US 2 (Stage)",
+        "North Central US (Stage)",
+        "South Central US (Stage)",
+        "West US (Stage)",
+        "West US 2 (Stage)",
+        "Asia",
+        "Asia Pacific",
+        "Australia",
+        "Brazil",
+        "Canada",
+        "Europe",
+        "France",
+        "Germany",
+        "Global",
+        "India",
+        "Japan",
+        "Korea",
+        "Norway",
+        "Singapore",
+        "South Africa",
+        "Switzerland",
+        "United Arab Emirates",
+        "United Kingdom",
+        "United States",
+        "United States EUAP",
+        "East Asia (Stage)",
+        "Southeast Asia (Stage)",
+        "East US STG",
+        "South Central US STG",
+        "North Central US",
+        "West US",
+        "Jio India West",
+        "Central US EUAP",
+        "West Central US",
+        "South Africa West",
+        "Australia Central",
+        "Australia Central 2",
+        "Australia Southeast",
+        "Japan West",
+        "Jio India Central",
+        "Korea South",
+        "South India",
+        "West India",
+        "Canada East",
+        "France South",
+        "Germany North",
+        "Norway West",
+        "Switzerland West",
+        "UK West",
+        "UAE Central",
+        "Brazil Southeast"
+      ],
+      "metadata": {
+        "description": "サブリージョンを選択してください"
+      }
+    },
+    "appServicePlanSkuCode": {
+      "type": "string",
+      "defaultValue": "P1v2",
+      "allowedValues": [
+        "F1",
+        "B1",
+        "B2",
+        "B3",
+        "D1",
+        "S1",
+        "S2",
+        "S3",
+        "Y1",
+        "P1v2",
+        "P2v2",
+        "P3v2",
+        "P1v3",
+        "P2v3",
+        "P3v3"
+      ],
+      "metadata": {
+        "description": "Azure App Service Plan のプランを選択してください"
+      }
+    },
+    "sqlDatabaseCollation": {
+      "type": "string",
+      "defaultValue": "Japanese_CI_AS",
+      "metadata": {
+        "description": "Azure SQL Database の照合順序を選択してください"
+      }
+    },
+    "sqlDatabaseMaxSizeGigabytes": {
+      "type": "int",
+      "defaultValue": 32,
+      "metadata": {
+        "description": "Azure SQL Database の最大サイズを入力してください（GB）"
+      }
+    },
+    "sqlServerAdminLoginUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure SQL Server の管理者ユーザー名を入力してください"
+      }
+    },
+    "sqlServerAdminLoginPassword": {
+      "type": "secureString",
+      "metadata": {
+        "description": "Azure SQL Server の管理者パスワードを入力してください"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Cdn/profiles",
+      "apiVersion": "2021-06-01",
+      "name": "[format('fd-{0}', parameters('workloadName'))]",
+      "location": "global",
+      "sku": {
+        "name": "Premium_AzureFrontDoor"
+      }
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/afdEndpoints",
+      "apiVersion": "2021-06-01",
+      "name": "[format('{0}/{1}', format('fd-{0}', parameters('workloadName')), format('cdne-{0}', parameters('workloadName')))]",
+      "location": "global",
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', format('fd-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/afdEndpoints/routes",
+      "apiVersion": "2021-06-01",
+      "name": "[format('{0}/{1}/{2}', format('fd-{0}', parameters('workloadName')), format('cdne-{0}', parameters('workloadName')), 'app')]",
+      "properties": {
+        "originGroup": {
+          "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', format('fd-{0}', parameters('workloadName')), 'default')]"
+        },
+        "supportedProtocols": [
+          "Http",
+          "Https"
+        ],
+        "patternsToMatch": [
+          "/*"
+        ],
+        "forwardingProtocol": "MatchRequest",
+        "linkToDefaultDomain": "Enabled",
+        "httpsRedirect": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', format('fd-{0}', parameters('workloadName')), format('cdne-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Cdn/profiles/originGroups', format('fd-{0}', parameters('workloadName')), 'default')]",
+        "[resourceId('Microsoft.Cdn/profiles/originGroups/origins', format('fd-{0}', parameters('workloadName')), 'default', 'main')]",
+        "[resourceId('Microsoft.Cdn/profiles/originGroups/origins', format('fd-{0}', parameters('workloadName')), 'default', 'sub')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/originGroups",
+      "apiVersion": "2021-06-01",
+      "name": "[format('{0}/{1}', format('fd-{0}', parameters('workloadName')), 'default')]",
+      "properties": {
+        "healthProbeSettings": {
+          "probeIntervalInSeconds": 100,
+          "probePath": "/",
+          "probeProtocol": "Http",
+          "probeRequestType": "HEAD"
+        },
+        "loadBalancingSettings": {
+          "sampleSize": 4,
+          "successfulSamplesRequired": 3
+        },
+        "sessionAffinityState": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', format('fd-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/originGroups/origins",
+      "apiVersion": "2021-06-01",
+      "name": "[format('{0}/{1}/{2}', format('fd-{0}', parameters('workloadName')), 'default', 'main')]",
+      "properties": {
+        "hostName": "[reference(resourceId('Microsoft.Resources/deployments', 'deployment-main')).outputs.webAppDefaultHostName.value]",
+        "httpPort": 80,
+        "httpsPort": 443,
+        "weight": 1000,
+        "originHostHeader": "[reference(resourceId('Microsoft.Resources/deployments', 'deployment-main')).outputs.webAppDefaultHostName.value]",
+        "priority": 1
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'deployment-main')]",
+        "[resourceId('Microsoft.Cdn/profiles/originGroups', format('fd-{0}', parameters('workloadName')), 'default')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/originGroups/origins",
+      "apiVersion": "2021-06-01",
+      "name": "[format('{0}/{1}/{2}', format('fd-{0}', parameters('workloadName')), 'default', 'sub')]",
+      "properties": {
+        "hostName": "[reference(resourceId('Microsoft.Resources/deployments', 'deployment-sub')).outputs.webAppDefaultHostName.value]",
+        "httpPort": 80,
+        "httpsPort": 443,
+        "weight": 1000,
+        "originHostHeader": "[reference(resourceId('Microsoft.Resources/deployments', 'deployment-sub')).outputs.webAppDefaultHostName.value]",
+        "priority": 2
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles/originGroups', format('fd-{0}', parameters('workloadName')), 'default')]",
+        "[resourceId('Microsoft.Resources/deployments', 'deployment-sub')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "deployment-main",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "workloadName": {
+            "value": "[parameters('workloadName')]"
+          },
+          "role": {
+            "value": "main"
+          },
+          "resourceGroupLocation": {
+            "value": "[parameters('regionMain')]"
+          },
+          "appServicePlanSkuCode": {
+            "value": "[parameters('appServicePlanSkuCode')]"
+          },
+          "sqlDatabaseCollation": {
+            "value": "[parameters('sqlDatabaseCollation')]"
+          },
+          "sqlDatabaseMaxSizeGigabytes": {
+            "value": "[parameters('sqlDatabaseMaxSizeGigabytes')]"
+          },
+          "sqlServerAdminLoginUserName": {
+            "value": "[parameters('sqlServerAdminLoginUserName')]"
+          },
+          "sqlServerAdminLoginPassword": {
+            "value": "[parameters('sqlServerAdminLoginPassword')]"
+          },
+          "sqlDatabaseCreateMode": {
+            "value": "Default"
+          },
+          "frontDoorId": {
+            "value": "[reference(resourceId('Microsoft.Cdn/profiles', format('fd-{0}', parameters('workloadName')))).frontDoorId]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.10.61.36676",
+              "templateHash": "8531114285059492409"
+            }
+          },
+          "parameters": {
+            "workloadName": {
+              "type": "string"
+            },
+            "role": {
+              "type": "string"
+            },
+            "resourceGroupLocation": {
+              "type": "string"
+            },
+            "appServicePlanSkuCode": {
+              "type": "string"
+            },
+            "sqlDatabaseCollation": {
+              "type": "string",
+              "defaultValue": "Japanese_CI_AS"
+            },
+            "sqlDatabaseMaxSizeGigabytes": {
+              "type": "int",
+              "defaultValue": 32
+            },
+            "sqlServerAdminLoginUserName": {
+              "type": "string"
+            },
+            "sqlServerAdminLoginPassword": {
+              "type": "secureString"
+            },
+            "sqlDatabaseCreateMode": {
+              "type": "string",
+              "allowedValues": [
+                "Default",
+                "Secondary"
+              ]
+            },
+            "sqlDatabaseSourceDatabaseId": {
+              "type": "string",
+              "defaultValue": ""
+            },
+            "frontDoorId": {
+              "type": "string"
+            }
+          },
+          "variables": {
+            "sqlDatabaseMaxSizeBytes": "[mul(mul(mul(parameters('sqlDatabaseMaxSizeGigabytes'), 1024), 1024), 1024)]",
+            "sqlDatabaseReadOnly": "[equals(parameters('sqlDatabaseCreateMode'), 'Secondary')]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2022-01-01",
+              "name": "[format('vnet-{0}-{1}', parameters('workloadName'), parameters('role'))]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "10.0.0.0/16"
+                  ]
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks/subnets",
+              "apiVersion": "2022-01-01",
+              "name": "[format('{0}/{1}', format('vnet-{0}-{1}', parameters('workloadName'), parameters('role')), 'default')]",
+              "properties": {
+                "addressPrefix": "10.0.0.0/24",
+                "delegations": [
+                  {
+                    "name": "delegation",
+                    "properties": {
+                      "serviceName": "Microsoft.Web/serverFarms"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}-{1}', parameters('workloadName'), parameters('role')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Web/serverfarms",
+              "apiVersion": "2022-03-01",
+              "name": "[format('plan-{0}-{1}', parameters('workloadName'), parameters('role'))]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "sku": {
+                "name": "[parameters('appServicePlanSkuCode')]"
+              },
+              "kind": "linux",
+              "properties": {
+                "reserved": true
+              }
+            },
+            {
+              "type": "Microsoft.Web/sites",
+              "apiVersion": "2022-03-01",
+              "name": "[format('app-{0}-{1}', parameters('workloadName'), parameters('role'))]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "kind": "app,linux",
+              "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}-{1}', parameters('workloadName'), parameters('role')))]",
+                "reserved": true,
+                "vnetRouteAllEnabled": true,
+                "siteConfig": {
+                  "linuxFxVersion": "NODE|16-lts",
+                  "alwaysOn": "[not(contains(createArray('F1', 'D1'), parameters('appServicePlanSkuCode')))]",
+                  "http20Enabled": true,
+                  "minTlsVersion": "1.2",
+                  "ftpsState": "Disabled",
+                  "publicNetworkAccess": "Enabled",
+                  "ipSecurityRestrictions": [
+                    {
+                      "ipAddress": "AzureFrontDoor.Backend",
+                      "action": "Allow",
+                      "tag": "ServiceTag",
+                      "priority": 300,
+                      "name": "from front door",
+                      "headers": {
+                        "X-Azure-FDID": [
+                          "[parameters('frontDoorId')]"
+                        ]
+                      }
+                    }
+                  ],
+                  "appSettings": [
+                    {
+                      "name": "SQL_DATABASE_SERVER",
+                      "value": "[reference(resourceId('Microsoft.Sql/servers', format('sql-{0}-{1}', parameters('workloadName'), parameters('role')))).fullyQualifiedDomainName]"
+                    },
+                    {
+                      "name": "SQL_DATABASE_USERNAME",
+                      "value": "[parameters('sqlServerAdminLoginUserName')]"
+                    },
+                    {
+                      "name": "SQL_DATABASE_PASSWORD",
+                      "value": "[parameters('sqlServerAdminLoginPassword')]"
+                    },
+                    {
+                      "name": "SQL_DATABASE_NAME",
+                      "value": "[format('sqldb-{0}', parameters('workloadName'))]"
+                    },
+                    {
+                      "name": "SQL_DATABASE_READONLY",
+                      "value": "[string(variables('sqlDatabaseReadOnly'))]"
+                    }
+                  ]
+                },
+                "httpsOnly": true,
+                "publicNetworkAccess": "Disabled",
+                "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}-{1}', parameters('workloadName'), parameters('role')), 'default')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}-{1}', parameters('workloadName'), parameters('role')))]",
+                "[resourceId('Microsoft.Sql/servers', format('sql-{0}-{1}', parameters('workloadName'), parameters('role')))]",
+                "[resourceId('Microsoft.Sql/servers/databases', format('sql-{0}-{1}', parameters('workloadName'), parameters('role')), format('sqldb-{0}', parameters('workloadName')))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}-{1}', parameters('workloadName'), parameters('role')), 'default')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Sql/servers",
+              "apiVersion": "2021-11-01",
+              "name": "[format('sql-{0}-{1}', parameters('workloadName'), parameters('role'))]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "properties": {
+                "administratorLogin": "[parameters('sqlServerAdminLoginUserName')]",
+                "administratorLoginPassword": "[parameters('sqlServerAdminLoginPassword')]",
+                "version": "12.0",
+                "minimalTlsVersion": "1.2",
+                "publicNetworkAccess": "Enabled"
+              }
+            },
+            {
+              "type": "Microsoft.Sql/servers/databases",
+              "apiVersion": "2021-11-01",
+              "name": "[format('{0}/{1}', format('sql-{0}-{1}', parameters('workloadName'), parameters('role')), format('sqldb-{0}', parameters('workloadName')))]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "sku": {
+                "name": "GP_S_Gen5",
+                "tier": "GeneralPurpose",
+                "family": "Gen5",
+                "capacity": 1
+              },
+              "properties": {
+                "collation": "[parameters('sqlDatabaseCollation')]",
+                "maxSizeBytes": "[variables('sqlDatabaseMaxSizeBytes')]",
+                "createMode": "[parameters('sqlDatabaseCreateMode')]",
+                "sourceDatabaseId": "[if(not(equals(parameters('sqlDatabaseSourceDatabaseId'), '')), parameters('sqlDatabaseSourceDatabaseId'), null())]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers', format('sql-{0}-{1}', parameters('workloadName'), parameters('role')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Sql/servers/firewallRules",
+              "apiVersion": "2021-11-01",
+              "name": "[format('{0}/{1}', format('sql-{0}-{1}', parameters('workloadName'), parameters('role')), 'AllowAllWindowsAzureIps')]",
+              "properties": {
+                "startIpAddress": "0.0.0.0",
+                "endIpAddress": "0.0.0.0"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers', format('sql-{0}-{1}', parameters('workloadName'), parameters('role')))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "sqlDatabaseId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Sql/servers/databases', format('sql-{0}-{1}', parameters('workloadName'), parameters('role')), format('sqldb-{0}', parameters('workloadName')))]"
+            },
+            "webAppDefaultHostName": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/sites', format('app-{0}-{1}', parameters('workloadName'), parameters('role')))).defaultHostName]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', format('fd-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "deployment-sub",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "workloadName": {
+            "value": "[parameters('workloadName')]"
+          },
+          "role": {
+            "value": "sub"
+          },
+          "resourceGroupLocation": {
+            "value": "[parameters('regionSub')]"
+          },
+          "appServicePlanSkuCode": {
+            "value": "[parameters('appServicePlanSkuCode')]"
+          },
+          "sqlDatabaseCollation": {
+            "value": "[parameters('sqlDatabaseCollation')]"
+          },
+          "sqlDatabaseMaxSizeGigabytes": {
+            "value": "[parameters('sqlDatabaseMaxSizeGigabytes')]"
+          },
+          "sqlServerAdminLoginUserName": {
+            "value": "[parameters('sqlServerAdminLoginUserName')]"
+          },
+          "sqlServerAdminLoginPassword": {
+            "value": "[parameters('sqlServerAdminLoginPassword')]"
+          },
+          "sqlDatabaseCreateMode": {
+            "value": "Secondary"
+          },
+          "sqlDatabaseSourceDatabaseId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deployment-main')).outputs.sqlDatabaseId.value]"
+          },
+          "frontDoorId": {
+            "value": "[reference(resourceId('Microsoft.Cdn/profiles', format('fd-{0}', parameters('workloadName')))).frontDoorId]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.10.61.36676",
+              "templateHash": "8531114285059492409"
+            }
+          },
+          "parameters": {
+            "workloadName": {
+              "type": "string"
+            },
+            "role": {
+              "type": "string"
+            },
+            "resourceGroupLocation": {
+              "type": "string"
+            },
+            "appServicePlanSkuCode": {
+              "type": "string"
+            },
+            "sqlDatabaseCollation": {
+              "type": "string",
+              "defaultValue": "Japanese_CI_AS"
+            },
+            "sqlDatabaseMaxSizeGigabytes": {
+              "type": "int",
+              "defaultValue": 32
+            },
+            "sqlServerAdminLoginUserName": {
+              "type": "string"
+            },
+            "sqlServerAdminLoginPassword": {
+              "type": "secureString"
+            },
+            "sqlDatabaseCreateMode": {
+              "type": "string",
+              "allowedValues": [
+                "Default",
+                "Secondary"
+              ]
+            },
+            "sqlDatabaseSourceDatabaseId": {
+              "type": "string",
+              "defaultValue": ""
+            },
+            "frontDoorId": {
+              "type": "string"
+            }
+          },
+          "variables": {
+            "sqlDatabaseMaxSizeBytes": "[mul(mul(mul(parameters('sqlDatabaseMaxSizeGigabytes'), 1024), 1024), 1024)]",
+            "sqlDatabaseReadOnly": "[equals(parameters('sqlDatabaseCreateMode'), 'Secondary')]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2022-01-01",
+              "name": "[format('vnet-{0}-{1}', parameters('workloadName'), parameters('role'))]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "10.0.0.0/16"
+                  ]
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks/subnets",
+              "apiVersion": "2022-01-01",
+              "name": "[format('{0}/{1}', format('vnet-{0}-{1}', parameters('workloadName'), parameters('role')), 'default')]",
+              "properties": {
+                "addressPrefix": "10.0.0.0/24",
+                "delegations": [
+                  {
+                    "name": "delegation",
+                    "properties": {
+                      "serviceName": "Microsoft.Web/serverFarms"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}-{1}', parameters('workloadName'), parameters('role')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Web/serverfarms",
+              "apiVersion": "2022-03-01",
+              "name": "[format('plan-{0}-{1}', parameters('workloadName'), parameters('role'))]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "sku": {
+                "name": "[parameters('appServicePlanSkuCode')]"
+              },
+              "kind": "linux",
+              "properties": {
+                "reserved": true
+              }
+            },
+            {
+              "type": "Microsoft.Web/sites",
+              "apiVersion": "2022-03-01",
+              "name": "[format('app-{0}-{1}', parameters('workloadName'), parameters('role'))]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "kind": "app,linux",
+              "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}-{1}', parameters('workloadName'), parameters('role')))]",
+                "reserved": true,
+                "vnetRouteAllEnabled": true,
+                "siteConfig": {
+                  "linuxFxVersion": "NODE|16-lts",
+                  "alwaysOn": "[not(contains(createArray('F1', 'D1'), parameters('appServicePlanSkuCode')))]",
+                  "http20Enabled": true,
+                  "minTlsVersion": "1.2",
+                  "ftpsState": "Disabled",
+                  "publicNetworkAccess": "Enabled",
+                  "ipSecurityRestrictions": [
+                    {
+                      "ipAddress": "AzureFrontDoor.Backend",
+                      "action": "Allow",
+                      "tag": "ServiceTag",
+                      "priority": 300,
+                      "name": "from front door",
+                      "headers": {
+                        "X-Azure-FDID": [
+                          "[parameters('frontDoorId')]"
+                        ]
+                      }
+                    }
+                  ],
+                  "appSettings": [
+                    {
+                      "name": "SQL_DATABASE_SERVER",
+                      "value": "[reference(resourceId('Microsoft.Sql/servers', format('sql-{0}-{1}', parameters('workloadName'), parameters('role')))).fullyQualifiedDomainName]"
+                    },
+                    {
+                      "name": "SQL_DATABASE_USERNAME",
+                      "value": "[parameters('sqlServerAdminLoginUserName')]"
+                    },
+                    {
+                      "name": "SQL_DATABASE_PASSWORD",
+                      "value": "[parameters('sqlServerAdminLoginPassword')]"
+                    },
+                    {
+                      "name": "SQL_DATABASE_NAME",
+                      "value": "[format('sqldb-{0}', parameters('workloadName'))]"
+                    },
+                    {
+                      "name": "SQL_DATABASE_READONLY",
+                      "value": "[string(variables('sqlDatabaseReadOnly'))]"
+                    }
+                  ]
+                },
+                "httpsOnly": true,
+                "publicNetworkAccess": "Disabled",
+                "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}-{1}', parameters('workloadName'), parameters('role')), 'default')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}-{1}', parameters('workloadName'), parameters('role')))]",
+                "[resourceId('Microsoft.Sql/servers', format('sql-{0}-{1}', parameters('workloadName'), parameters('role')))]",
+                "[resourceId('Microsoft.Sql/servers/databases', format('sql-{0}-{1}', parameters('workloadName'), parameters('role')), format('sqldb-{0}', parameters('workloadName')))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}-{1}', parameters('workloadName'), parameters('role')), 'default')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Sql/servers",
+              "apiVersion": "2021-11-01",
+              "name": "[format('sql-{0}-{1}', parameters('workloadName'), parameters('role'))]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "properties": {
+                "administratorLogin": "[parameters('sqlServerAdminLoginUserName')]",
+                "administratorLoginPassword": "[parameters('sqlServerAdminLoginPassword')]",
+                "version": "12.0",
+                "minimalTlsVersion": "1.2",
+                "publicNetworkAccess": "Enabled"
+              }
+            },
+            {
+              "type": "Microsoft.Sql/servers/databases",
+              "apiVersion": "2021-11-01",
+              "name": "[format('{0}/{1}', format('sql-{0}-{1}', parameters('workloadName'), parameters('role')), format('sqldb-{0}', parameters('workloadName')))]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "sku": {
+                "name": "GP_S_Gen5",
+                "tier": "GeneralPurpose",
+                "family": "Gen5",
+                "capacity": 1
+              },
+              "properties": {
+                "collation": "[parameters('sqlDatabaseCollation')]",
+                "maxSizeBytes": "[variables('sqlDatabaseMaxSizeBytes')]",
+                "createMode": "[parameters('sqlDatabaseCreateMode')]",
+                "sourceDatabaseId": "[if(not(equals(parameters('sqlDatabaseSourceDatabaseId'), '')), parameters('sqlDatabaseSourceDatabaseId'), null())]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers', format('sql-{0}-{1}', parameters('workloadName'), parameters('role')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Sql/servers/firewallRules",
+              "apiVersion": "2021-11-01",
+              "name": "[format('{0}/{1}', format('sql-{0}-{1}', parameters('workloadName'), parameters('role')), 'AllowAllWindowsAzureIps')]",
+              "properties": {
+                "startIpAddress": "0.0.0.0",
+                "endIpAddress": "0.0.0.0"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers', format('sql-{0}-{1}', parameters('workloadName'), parameters('role')))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "sqlDatabaseId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Sql/servers/databases', format('sql-{0}-{1}', parameters('workloadName'), parameters('role')), format('sqldb-{0}', parameters('workloadName')))]"
+            },
+            "webAppDefaultHostName": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/sites', format('app-{0}-{1}', parameters('workloadName'), parameters('role')))).defaultHostName]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', format('fd-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Resources/deployments', 'deployment-main')]"
+      ]
+    }
+  ]
+}
