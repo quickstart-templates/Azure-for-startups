@@ -12,6 +12,11 @@
 - [1-8 Firebase で作ったシステムを Azure に移行したい](./1_web-application/1-8_transfer-system-from-firebase/)
 
 
+### 7 バックアップ
+
+- [7-2 リージョン障害時も運用継続したい（Webアプリケーション編）](./7_backup/7-2_disaster-recorvery-webapp/)
+
+
 ## 本リポジトリの利用について
 
 各構成のディレクトリに、デプロイ用のリンクボタンを用意しています。各ディレクトリの README を参考にデプロイおよび構成を行ってください。
