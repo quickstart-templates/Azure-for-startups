@@ -111,11 +111,11 @@ az bicep build --file bicep/azuredeploy.bicep --outdir .
 ### Azure API Management の完全消去（ Purge ）
 
 ```bash
-SUBSCRIPTION_ID="$(az account show --query id --output tsv | tr -d '\r')"
-APIM_NAME=$(az apim list --resource-group ${RESOURCE_GROUP_NAME} --query [0].name --output tsv | tr -d '\r')
+SUBSCRIPTION_ID="$(az account show --query id --output tsv)"
+APIM_NAME=$(az apim list --resource-group ${RESOURCE_GROUP_NAME} --query [0].name --output tsv)
 URL="https://management.azure.com/subscriptions/${SUBSCRIPTION_ID}/providers/Microsoft.ApiManagement/locations/japaneast/deletedservices/${APIM_NAME}?api-version=2021-08-01"
 # management.azure.com に対するアクセストークンを取得する
-TOKEN=$(az account get-access-token --resource=https://management.azure.com --query accessToken --output tsv | tr -d '\r')
+TOKEN=$(az account get-access-token --resource=https://management.azure.com --query accessToken --output tsv)
 
 curl -i -X DELETE -H "Authorization: Bearer ${TOKEN}" ${URL}
 ```
