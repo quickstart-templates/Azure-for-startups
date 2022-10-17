@@ -13,9 +13,21 @@ Azure Data Factoryを利用することでAzureのみでなく、オンプレや
 
 ### Azure リソース構成
 
-- 
+- Azure Data Factory
+- Storage Account
 
 <img src="./docs/images/generated-structure-by-arm.png" width="80%" alt="構成図">
+
+Azure Data Factory では、Storage Account に対して Linked Service を構成しています。
+
+Power BI のデータソースとの接続については、こちらをご参照ください。
+
+- [Power BI でデータに接続する ‐ ドキュメント - Power BI | Microsoft Learn](https://learn.microsoft.com/ja-jp/power-bi/connect-data/)
+
+オンプレ上のリソースとの接続については、セルフホステッド統合ランタイムについてご確認ください。
+
+- [セルフホステッド統合ランタイム](https://learn.microsoft.com/en-us/azure/data-factory/concepts-integration-runtime#self-hosted-integration-runtime)
+
 
 
 ## 利用方法
@@ -38,6 +50,7 @@ Azure Data Factoryを利用することでAzureのみでなく、オンプレや
 | Instance details | |
 | Region | 利用するリージョンを選択 |
 | Workload Name | リソース名に付与する識別用の文字列（プロジェクト名など）を入力 |
+| Storage Account Sku Code | Azure Storage Account の SKU を選択 |
 
 
 ## デバッグ
