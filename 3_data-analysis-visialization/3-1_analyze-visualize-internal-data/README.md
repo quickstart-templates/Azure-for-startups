@@ -10,9 +10,10 @@ Azure Data Factoryを利用することでAzureのみでなく、オンプレや
 
 <img src="./docs/images/3-1_analyze-visualize-internal-data.png" width="80%" alt="構成図">
 
-Power BI による分析は、Power BI Desktop または Power BI サービスを利用できます。詳しくはドキュメントをご参照ください。
+Power BI による分析は、Power BI サービス、Power BI Embedded または Power BI Desktop を利用できます。詳しくはドキュメントをご参照ください。
 
 - [Power BI ドキュメント - Power BI | Microsoft Learn](https://learn.microsoft.com/ja-jp/power-bi/)
+- [Power BI Embedded の分析ドキュメント - Power BI | Microsoft Learn](https://learn.microsoft.com/ja-jp/power-bi/developer/embedded/)
 
 Power BI のデータソースとの接続については、こちらをご参照ください。
 
