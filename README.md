@@ -12,6 +12,10 @@
 - [1-8 Firebase で作ったシステムを Azure に移行したい](./1_web-application/1-8_transfer-system-from-firebase/)
 
 
+### 3 データ分析・可視化
+
+- [3-1 社内データを統合して分析・可視化したい](./3_data-analysis-visialization/3-1_analyze-visualize-internal-data/)
+
 ### 7 バックアップ
 
 - [7-2 リージョン障害時も運用継続したい（Webアプリケーション編）](./7_backup/7-2_disaster-recorvery-webapp/)

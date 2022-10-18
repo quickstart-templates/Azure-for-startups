@@ -1,0 +1,74 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.11.1.770",
+      "templateHash": "7305901729486741775"
+    }
+  },
+  "parameters": {
+    "workloadName": {
+      "type": "string",
+      "metadata": {
+        "description": "リソース名に付与する識別用の文字列（プロジェクト名など）を入力してください"
+      }
+    },
+    "storageAccountSkuCode": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Premium_LRS",
+        "Premium_ZRS",
+        "Standard_GRS",
+        "Standard_GZRS",
+        "Standard_LRS",
+        "Standard_RAGRS",
+        "Standard_RAGZRS",
+        "Standard_ZRS"
+      ],
+      "metadata": {
+        "description": "Azure Storage Account の SKU を選択してください"
+      }
+    }
+  },
+  "variables": {
+    "resourceGroupId": "[resourceGroup().id]",
+    "resourceGroupLocation": "[resourceGroup().location]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DataFactory/factories",
+      "apiVersion": "2018-06-01",
+      "name": "[format('fd-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2022-05-01",
+      "name": "[format('st{0}', uniqueString(variables('resourceGroupId')))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "kind": "StorageV2",
+      "sku": {
+        "name": "[parameters('storageAccountSkuCode')]"
+      }
+    },
+    {
+      "type": "Microsoft.DataFactory/factories/linkedservices",
+      "apiVersion": "2018-06-01",
+      "name": "[format('{0}/{1}', format('fd-{0}', parameters('workloadName')), 'AzureBlobStorage1')]",
+      "properties": {
+        "type": "AzureBlobStorage",
+        "typeProperties": {
+          "connectionString": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', format('st{0}', uniqueString(variables('resourceGroupId'))), listKeys(resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(variables('resourceGroupId')))), '2022-05-01').keys[0].value)]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DataFactory/factories', format('fd-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(variables('resourceGroupId'))))]"
+      ]
+    }
+  ]
+}
