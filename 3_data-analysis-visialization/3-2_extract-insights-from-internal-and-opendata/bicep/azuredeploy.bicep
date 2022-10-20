@@ -217,7 +217,7 @@ resource synapseAllowAllAzureIps 'Microsoft.Synapse/workspaces/firewallRules@202
 }
 
 resource synapseSqlPool 'Microsoft.Synapse/workspaces/sqlPools@2021-06-01' = {
-  name: 'syndp${workloadName}'
+  name: 'syndp${join(split(workloadName, '-'), '')}'
   parent: synapse
   location: resourceGroupLocation
   sku: {

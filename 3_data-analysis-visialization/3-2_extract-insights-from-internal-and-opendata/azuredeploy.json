@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.11.1.770",
-      "templateHash": "6023640855007739990"
+      "templateHash": "5657394591607666375"
     }
   },
   "parameters": {
@@ -110,7 +110,7 @@
       "properties": {
         "type": "AzureSqlDW",
         "typeProperties": {
-          "connectionString": "[format('Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source={0}.sql.azuresynapse.net;Initial Catalog={1}', format('syn-{0}', parameters('workloadName')), format('syndp{0}', parameters('workloadName')))]",
+          "connectionString": "[format('Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source={0}.sql.azuresynapse.net;Initial Catalog={1}', format('syn-{0}', parameters('workloadName')), format('syndp{0}', join(split(parameters('workloadName'), '-'), '')))]",
           "credential": {
             "referenceName": "credential1",
             "type": "CredentialReference"
@@ -121,7 +121,7 @@
         "[resourceId('Microsoft.DataFactory/factories', format('fd-{0}', parameters('workloadName')))]",
         "[resourceId('Microsoft.DataFactory/factories/credentials', format('fd-{0}', parameters('workloadName')), 'credential1')]",
         "[resourceId('Microsoft.Synapse/workspaces', format('syn-{0}', parameters('workloadName')))]",
-        "[resourceId('Microsoft.Synapse/workspaces/sqlPools', format('syn-{0}', parameters('workloadName')), format('syndp{0}', parameters('workloadName')))]"
+        "[resourceId('Microsoft.Synapse/workspaces/sqlPools', format('syn-{0}', parameters('workloadName')), format('syndp{0}', join(split(parameters('workloadName'), '-'), '')))]"
       ]
     },
     {
@@ -194,7 +194,7 @@
             },
             {
               "name": "SQL_DATABASE_NAME",
-              "value": "[format('syndp{0}', parameters('workloadName'))]"
+              "value": "[format('syndp{0}', join(split(parameters('workloadName'), '-'), ''))]"
             },
             {
               "name": "USER_ASSIGNED_IDENTITY_CLIENT_ID",
@@ -216,7 +216,7 @@
         "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', parameters('workloadName')))]",
         "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(resourceGroup().id, 'func')))]",
         "[resourceId('Microsoft.Synapse/workspaces', format('syn-{0}', parameters('workloadName')))]",
-        "[resourceId('Microsoft.Synapse/workspaces/sqlPools', format('syn-{0}', parameters('workloadName')), format('syndp{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Synapse/workspaces/sqlPools', format('syn-{0}', parameters('workloadName')), format('syndp{0}', join(split(parameters('workloadName'), '-'), '')))]",
         "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('workloadName')))]"
       ]
     },
@@ -311,7 +311,7 @@
     {
       "type": "Microsoft.Synapse/workspaces/sqlPools",
       "apiVersion": "2021-06-01",
-      "name": "[format('{0}/{1}', format('syn-{0}', parameters('workloadName')), format('syndp{0}', parameters('workloadName')))]",
+      "name": "[format('{0}/{1}', format('syn-{0}', parameters('workloadName')), format('syndp{0}', join(split(parameters('workloadName'), '-'), '')))]",
       "location": "[variables('resourceGroupLocation')]",
       "sku": {
         "name": "DW100c"
