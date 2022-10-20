@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.11.1.770",
-      "templateHash": "14468741492436882142"
+      "templateHash": "6023640855007739990"
     }
   },
   "parameters": {
@@ -110,7 +110,7 @@
       "properties": {
         "type": "AzureSqlDW",
         "typeProperties": {
-          "connectionString": "",
+          "connectionString": "[format('Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source={0}.sql.azuresynapse.net;Initial Catalog={1}', format('syn-{0}', parameters('workloadName')), format('syndp{0}', parameters('workloadName')))]",
           "credential": {
             "referenceName": "credential1",
             "type": "CredentialReference"
@@ -119,7 +119,9 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.DataFactory/factories', format('fd-{0}', parameters('workloadName')))]",
-        "[resourceId('Microsoft.DataFactory/factories/credentials', format('fd-{0}', parameters('workloadName')), 'credential1')]"
+        "[resourceId('Microsoft.DataFactory/factories/credentials', format('fd-{0}', parameters('workloadName')), 'credential1')]",
+        "[resourceId('Microsoft.Synapse/workspaces', format('syn-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Synapse/workspaces/sqlPools', format('syn-{0}', parameters('workloadName')), format('syndp{0}', parameters('workloadName')))]"
       ]
     },
     {
@@ -185,6 +187,18 @@
             {
               "name": "WEBSITE_NODE_DEFAULT_VERSION",
               "value": "~16"
+            },
+            {
+              "name": "SQL_DATABASE_SERVER",
+              "value": "[format('{0}.sql.azuresynapse.net', format('syn-{0}', parameters('workloadName')))]"
+            },
+            {
+              "name": "SQL_DATABASE_NAME",
+              "value": "[format('syndp{0}', parameters('workloadName'))]"
+            },
+            {
+              "name": "USER_ASSIGNED_IDENTITY_CLIENT_ID",
+              "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('workloadName')))).clientId]"
             }
           ],
           "cors": {
@@ -201,6 +215,8 @@
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', parameters('workloadName')))]",
         "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(resourceGroup().id, 'func')))]",
+        "[resourceId('Microsoft.Synapse/workspaces', format('syn-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Synapse/workspaces/sqlPools', format('syn-{0}', parameters('workloadName')), format('syndp{0}', parameters('workloadName')))]",
         "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('workloadName')))]"
       ]
     },
@@ -245,7 +261,11 @@
           "resourceId": "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(resourceGroup().id, 'synapse')))]",
           "accountUrl": "[format('https://{0}.dfs.{1}', format('st{0}', uniqueString(resourceGroup().id, 'synapse')), environment().suffixes.storage)]",
           "filesystem": "data"
-        }
+        },
+        "trustedServiceBypassEnabled": true
+      },
+      "identity": {
+        "type": "SystemAssigned"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(resourceGroup().id, 'synapse')))]"
@@ -271,6 +291,18 @@
       "name": "[format('{0}/{1}', format('syn-{0}', parameters('workloadName')), 'default')]",
       "properties": {
         "azureADOnlyAuthentication": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Synapse/workspaces', format('syn-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Synapse/workspaces/firewallRules",
+      "apiVersion": "2021-06-01",
+      "name": "[format('{0}/{1}', format('syn-{0}', parameters('workloadName')), 'AllowAllWindowsAzureIps')]",
+      "properties": {
+        "startIpAddress": "0.0.0.0",
+        "endIpAddress": "0.0.0.0"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Synapse/workspaces', format('syn-{0}', parameters('workloadName')))]"

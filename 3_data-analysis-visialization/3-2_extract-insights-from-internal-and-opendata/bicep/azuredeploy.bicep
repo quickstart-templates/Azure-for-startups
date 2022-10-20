@@ -50,7 +50,7 @@ resource factoryLinkedServiceSynapse 'Microsoft.DataFactory/factories/linkedserv
   properties: {
     type: 'AzureSqlDW'
     typeProperties: {
-      connectionString: ''
+      connectionString: 'Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=${synapse.name}.sql.azuresynapse.net;Initial Catalog=${synapseSqlPool.name}'
       credential: {
         referenceName: factoryCredencial.name
         type: 'CredentialReference'
@@ -121,6 +121,18 @@ resource functions 'Microsoft.Web/sites@2022-03-01' = {
           name: 'WEBSITE_NODE_DEFAULT_VERSION'
           value: '~16'
         }
+        {
+          name: 'SQL_DATABASE_SERVER'
+          value: '${synapse.name}.sql.azuresynapse.net'
+        }
+        {
+          name: 'SQL_DATABASE_NAME'
+          value: synapseSqlPool.name
+        }
+        {
+          name: 'USER_ASSIGNED_IDENTITY_CLIENT_ID'
+          value: userAssignedManagedIdentity.properties.clientId
+        }
       ]
       cors: {
         allowedOrigins: [
@@ -170,6 +182,10 @@ resource synapse 'Microsoft.Synapse/workspaces@2021-06-01' = {
       accountUrl: 'https://${storageAccountSynapse.name}.dfs.${environment().suffixes.storage}'
       filesystem: 'data'
     }
+    trustedServiceBypassEnabled: true
+  }
+  identity: {
+    type: 'SystemAssigned'
   }
 }
 
@@ -188,6 +204,15 @@ resource synapseADOnlyAuth 'Microsoft.Synapse/workspaces/azureADOnlyAuthenticati
   parent: synapse
   properties: {
     azureADOnlyAuthentication: true
+  }
+}
+
+resource synapseAllowAllAzureIps 'Microsoft.Synapse/workspaces/firewallRules@2021-06-01' = {
+  name: 'AllowAllWindowsAzureIps'
+  parent: synapse
+  properties: {
+    startIpAddress: '0.0.0.0'
+    endIpAddress: '0.0.0.0'
   }
 }
 
