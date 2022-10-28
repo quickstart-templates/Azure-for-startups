@@ -16,6 +16,12 @@
 
 - [3-1 社内データを統合して分析・可視化したい](./3_data-analysis-visialization/3-1_analyze-visualize-internal-data/)
 
+
+### 4 IoT
+
+- [4-1 IoTデバイス or スマホからデータ取得・可視化（PaaS）](./4_iot/4-1_collect-data-from-iot-mobile-devices-with-paas/)
+
+
 ### 7 バックアップ
 
 - [7-2 リージョン障害時も運用継続したい（Webアプリケーション編）](./7_backup/7-2_disaster-recorvery-webapp/)
