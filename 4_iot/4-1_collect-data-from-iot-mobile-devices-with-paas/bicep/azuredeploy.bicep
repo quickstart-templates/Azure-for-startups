@@ -35,7 +35,7 @@ param serviceBusTier string = 'Standard'
 
 var resourceGroupLocation = resourceGroup().location
 
-var appSettingsOptional = [
+var appSettingsOptional = optional ? [
   {
     name: 'SQL_DATABASE_NAME'
     value: sqlServer.outputs.sqlServerDatabaseName
@@ -52,7 +52,7 @@ var appSettingsOptional = [
     name: 'SQL_DATABASE_USERNAME'
     value: sqlServerAdminLoginUserName
   }
-]
+] : []
 
 var appSettingsBase = [
   {
@@ -61,7 +61,7 @@ var appSettingsBase = [
   }
 ]
 
-var appSettings = !optional ? appSettingsBase : concat(appSettingsBase, appSettingsOptional)
+var appSettings = concat(appSettingsBase, appSettingsOptional)
 
 // Role definition ID if Storage Account Blob Contributor
 var roleDefinitionIdStorageBlobDataContributor = resourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')

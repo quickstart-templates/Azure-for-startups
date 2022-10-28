@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.11.1.770",
-      "templateHash": "15915471371401074491"
+      "templateHash": "16345682926148743183"
     }
   },
   "parameters": {
@@ -260,7 +260,7 @@
           "alwaysOn": "[not(contains(createArray('F1', 'D1'), parameters('appServicePlanSkuCode')))]",
           "http20Enabled": true,
           "ftpsState": "Disabled",
-          "appSettings": "[if(not(parameters('optional')), createArray(createObject('name', 'STORAGE_ACCOUNT_CONNECTION_STRING', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix={2}', format('st{0}', join(split(parameters('workloadName'), '-'), '')), listKeys(resourceId('Microsoft.Storage/storageAccounts', format('st{0}', join(split(parameters('workloadName'), '-'), ''))), '2022-05-01').keys[0].value, environment().suffixes.storage))), concat(createArray(createObject('name', 'STORAGE_ACCOUNT_CONNECTION_STRING', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix={2}', format('st{0}', join(split(parameters('workloadName'), '-'), '')), listKeys(resourceId('Microsoft.Storage/storageAccounts', format('st{0}', join(split(parameters('workloadName'), '-'), ''))), '2022-05-01').keys[0].value, environment().suffixes.storage))), createArray(createObject('name', 'SQL_DATABASE_NAME', 'value', reference(resourceId('Microsoft.Resources/deployments', 'deployment-sql-database'), '2020-10-01').outputs.sqlServerDatabaseName.value), createObject('name', 'SQL_DATABASE_PASSWORD', 'value', parameters('sqlServerAdminLoginPassword')), createObject('name', 'SQL_DATABASE_SERVER', 'value', reference(resourceId('Microsoft.Resources/deployments', 'deployment-sql-database'), '2020-10-01').outputs.sqlServerFullyQualifiedDomainName.value), createObject('name', 'SQL_DATABASE_USERNAME', 'value', parameters('sqlServerAdminLoginUserName')))))]"
+          "appSettings": "[concat(createArray(createObject('name', 'STORAGE_ACCOUNT_CONNECTION_STRING', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix={2}', format('st{0}', join(split(parameters('workloadName'), '-'), '')), listKeys(resourceId('Microsoft.Storage/storageAccounts', format('st{0}', join(split(parameters('workloadName'), '-'), ''))), '2022-05-01').keys[0].value, environment().suffixes.storage))), if(parameters('optional'), createArray(createObject('name', 'SQL_DATABASE_NAME', 'value', reference(resourceId('Microsoft.Resources/deployments', 'deployment-sql-database'), '2020-10-01').outputs.sqlServerDatabaseName.value), createObject('name', 'SQL_DATABASE_PASSWORD', 'value', parameters('sqlServerAdminLoginPassword')), createObject('name', 'SQL_DATABASE_SERVER', 'value', reference(resourceId('Microsoft.Resources/deployments', 'deployment-sql-database'), '2020-10-01').outputs.sqlServerFullyQualifiedDomainName.value), createObject('name', 'SQL_DATABASE_USERNAME', 'value', parameters('sqlServerAdminLoginUserName'))), createArray()))]"
         },
         "httpsOnly": true
       },
