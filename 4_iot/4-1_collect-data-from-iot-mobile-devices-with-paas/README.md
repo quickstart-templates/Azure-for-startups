@@ -52,6 +52,15 @@ Azure IoT Hub のルーティングは、以下のように構成しています
 | Instance details | |
 | Region | 利用するリージョンを選択 |
 | Workload Name | リソース名に付与する識別用の文字列（プロジェクト名など）を入力 |
+| Storage Account Sku Code | Azure Storage Account の SKU を選択 |
+| App Service Plan Sku Code | Azure App Service Plan のプランを選択 |
+| Iot Hub Sku Code | Azure IoT Hub のプランを選択 |
+| Optional | Optional の構成を有効にするか選択 |
+| Sql Database Collation | Optional の構成を含める場合、Azure SQL Database の照合順序を選択 |
+| Sql Database Max Size Gigabytes | Optional の構成を含める場合、Azure SQL Database の最大サイズを入力（GB） |
+| Sql Server Admin Login User Name | Optional の構成を含める場合、Azure SQL Server の管理者ユーザー名を入力 |
+| Sql Server Admin Login Password | Optional の構成を含める場合、Azure SQL Server の管理者パスワードを入力 |
+| Service Bus Tier | Optional の構成を含める場合、Azure Service Bus のティアを選択 |
 
 
 ## リソース配置後の作業
