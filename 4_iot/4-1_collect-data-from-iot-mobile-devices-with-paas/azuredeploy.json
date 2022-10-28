@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.11.1.770",
-      "templateHash": "14437729443595287386"
+      "templateHash": "15915471371401074491"
     }
   },
   "parameters": {
@@ -42,7 +42,13 @@
         "B3",
         "S1",
         "S2",
-        "S3"
+        "S3",
+        "P1v2",
+        "P2v2",
+        "P3v2",
+        "P1v3",
+        "P2v3",
+        "P3v3"
       ],
       "metadata": {
         "description": "Azure App Service Plan のプランを選択してください"
@@ -58,16 +64,10 @@
         "B3",
         "S1",
         "S2",
-        "S3",
-        "P1v2",
-        "P2v2",
-        "P3v2",
-        "P1v3",
-        "P2v3",
-        "P3v3"
+        "S3"
       ],
       "metadata": {
-        "description": "Azure App Service Plan のプランを選択してください"
+        "description": "Azure IoT Hub のプランを選択してください"
       }
     },
     "optional": {

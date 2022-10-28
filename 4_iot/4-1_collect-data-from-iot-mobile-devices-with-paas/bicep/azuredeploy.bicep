@@ -6,11 +6,11 @@ param workloadName string
 param storageAccountSkuCode string = 'Standard_LRS'
 
 @description('Azure App Service Plan のプランを選択してください')
-@allowed(['F1', 'B1', 'B2', 'B3', 'S1', 'S2', 'S3'])
+@allowed(['F1', 'B1', 'B2', 'B3', 'S1', 'S2', 'S3', 'P1v2', 'P2v2', 'P3v2', 'P1v3', 'P2v3', 'P3v3'])
 param appServicePlanSkuCode string = 'F1'
 
-@description('Azure App Service Plan のプランを選択してください')
-@allowed(['F1', 'B1', 'B2', 'B3', 'S1', 'S2', 'S3', 'P1v2', 'P2v2', 'P3v2', 'P1v3', 'P2v3', 'P3v3'])
+@description('Azure IoT Hub のプランを選択してください')
+@allowed(['F1', 'B1', 'B2', 'B3', 'S1', 'S2', 'S3'])
 param iotHubSkuCode string = 'F1'
 
 @description('Optional の構成を有効にするか選択してください')
