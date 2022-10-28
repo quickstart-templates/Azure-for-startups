@@ -35,34 +35,6 @@ param serviceBusTier string = 'Standard'
 
 var resourceGroupLocation = resourceGroup().location
 
-var appSettingsOptional = optional ? [
-  {
-    name: 'SQL_DATABASE_NAME'
-    value: sqlServer.outputs.sqlServerDatabaseName
-  }
-  {
-    name: 'SQL_DATABASE_PASSWORD'
-    value: sqlServerAdminLoginPassword
-  }
-  {
-    name: 'SQL_DATABASE_SERVER'
-    value: sqlServer.outputs.sqlServerFullyQualifiedDomainName
-  }
-  {
-    name: 'SQL_DATABASE_USERNAME'
-    value: sqlServerAdminLoginUserName
-  }
-] : []
-
-var appSettingsBase = [
-  {
-    name: 'STORAGE_ACCOUNT_CONNECTION_STRING'
-    value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
-  }
-]
-
-var appSettings = concat(appSettingsBase, appSettingsOptional)
-
 // Role definition ID if Storage Account Blob Contributor
 var roleDefinitionIdStorageBlobDataContributor = resourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
 
@@ -91,7 +63,7 @@ var iotHubRoutesBase = [
   }
 ]
 
-var iotHubRoutes = !optional ? iotHubRoutesBase : concat(iotHubRoutesBase, [
+var iotHubRoutes = optional ? concat(iotHubRoutesBase, [
   {
     name: 'toServiceBusTopic'
     source: 'DeviceMessages'
@@ -101,7 +73,7 @@ var iotHubRoutes = !optional ? iotHubRoutesBase : concat(iotHubRoutesBase, [
     ]
     isEnabled: true
   }
-])
+]) : iotHubRoutesBase
 
 resource userAssignedManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = {
   name: 'id-${workloadName}'
@@ -211,7 +183,12 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
       alwaysOn: !contains(['F1', 'D1'], appServicePlanSkuCode)
       http20Enabled: true
       ftpsState: 'Disabled'
-      appSettings: appSettings
+      appSettings: [
+        {
+          name: 'STORAGE_ACCOUNT_CONNECTION_STRING'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
+        }      
+      ]
     }
     httpsOnly: true
   }
@@ -227,6 +204,7 @@ module sqlServer 'optional/sql-server.bicep' = if (optional) {
     sqlServerAdminLoginUserName: sqlServerAdminLoginUserName
     sqlServerAdminLoginPassword: sqlServerAdminLoginPassword
     userAssignedManagedIdentityName: userAssignedManagedIdentity.name
+    webAppName: webApp.name
   }
 }
 

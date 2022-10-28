@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.11.1.770",
-      "templateHash": "16345682926148743183"
+      "templateHash": "8652946647700629124"
     }
   },
   "parameters": {
@@ -142,7 +142,7 @@
         "isEnabled": true
       }
     ],
-    "iotHubRoutes": "[if(not(parameters('optional')), variables('iotHubRoutesBase'), concat(variables('iotHubRoutesBase'), createArray(createObject('name', 'toServiceBusTopic', 'source', 'DeviceMessages', 'condition', 'true', 'endpointNames', createArray('toServiceBusTopic'), 'isEnabled', true()))))]"
+    "iotHubRoutes": "[if(parameters('optional'), concat(variables('iotHubRoutesBase'), createArray(createObject('name', 'toServiceBusTopic', 'source', 'DeviceMessages', 'condition', 'true', 'endpointNames', createArray('toServiceBusTopic'), 'isEnabled', true()))), variables('iotHubRoutesBase'))]"
   },
   "resources": [
     {
@@ -260,13 +260,17 @@
           "alwaysOn": "[not(contains(createArray('F1', 'D1'), parameters('appServicePlanSkuCode')))]",
           "http20Enabled": true,
           "ftpsState": "Disabled",
-          "appSettings": "[concat(createArray(createObject('name', 'STORAGE_ACCOUNT_CONNECTION_STRING', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix={2}', format('st{0}', join(split(parameters('workloadName'), '-'), '')), listKeys(resourceId('Microsoft.Storage/storageAccounts', format('st{0}', join(split(parameters('workloadName'), '-'), ''))), '2022-05-01').keys[0].value, environment().suffixes.storage))), if(parameters('optional'), createArray(createObject('name', 'SQL_DATABASE_NAME', 'value', reference(resourceId('Microsoft.Resources/deployments', 'deployment-sql-database'), '2020-10-01').outputs.sqlServerDatabaseName.value), createObject('name', 'SQL_DATABASE_PASSWORD', 'value', parameters('sqlServerAdminLoginPassword')), createObject('name', 'SQL_DATABASE_SERVER', 'value', reference(resourceId('Microsoft.Resources/deployments', 'deployment-sql-database'), '2020-10-01').outputs.sqlServerFullyQualifiedDomainName.value), createObject('name', 'SQL_DATABASE_USERNAME', 'value', parameters('sqlServerAdminLoginUserName'))), createArray()))]"
+          "appSettings": [
+            {
+              "name": "STORAGE_ACCOUNT_CONNECTION_STRING",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix={2}', format('st{0}', join(split(parameters('workloadName'), '-'), '')), listKeys(resourceId('Microsoft.Storage/storageAccounts', format('st{0}', join(split(parameters('workloadName'), '-'), ''))), '2022-05-01').keys[0].value, environment().suffixes.storage)]"
+            }
+          ]
         },
         "httpsOnly": true
       },
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', parameters('workloadName')))]",
-        "[resourceId('Microsoft.Resources/deployments', 'deployment-sql-database')]",
         "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', join(split(parameters('workloadName'), '-'), '')))]"
       ]
     },
@@ -301,6 +305,9 @@
           },
           "userAssignedManagedIdentityName": {
             "value": "[format('id-{0}', parameters('workloadName'))]"
+          },
+          "webAppName": {
+            "value": "[format('app-{0}', parameters('workloadName'))]"
           }
         },
         "template": {
@@ -310,7 +317,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.11.1.770",
-              "templateHash": "6074077851237944822"
+              "templateHash": "15497609706972698524"
             }
           },
           "parameters": {
@@ -335,6 +342,9 @@
               "type": "secureString"
             },
             "userAssignedManagedIdentityName": {
+              "type": "string"
+            },
+            "webAppName": {
               "type": "string"
             }
           },
@@ -400,13 +410,24 @@
               "dependsOn": [
                 "[resourceId('Microsoft.Sql/servers', format('sql-{0}', parameters('workloadName')))]"
               ]
+            },
+            {
+              "type": "Microsoft.Web/sites/config",
+              "apiVersion": "2022-03-01",
+              "name": "[format('{0}/{1}', parameters('webAppName'), 'appsettings')]",
+              "properties": {
+                "SQL_DATABASE_NAME": "[format('sqldb-{0}', parameters('workloadName'))]",
+                "SQL_DATABASE_PASSWORD": "[parameters('sqlServerAdminLoginPassword')]",
+                "SQL_DATABASE_SERVER": "[reference(resourceId('Microsoft.Sql/servers', format('sql-{0}', parameters('workloadName')))).fullyQualifiedDomainName]",
+                "SQL_DATABASE_USERNAME": "[parameters('sqlServerAdminLoginUserName')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers', format('sql-{0}', parameters('workloadName')))]",
+                "[resourceId('Microsoft.Sql/servers/databases', format('sql-{0}', parameters('workloadName')), format('sqldb-{0}', parameters('workloadName')))]"
+              ]
             }
           ],
           "outputs": {
-            "sqlServerFullyQualifiedDomainName": {
-              "type": "string",
-              "value": "[reference(resourceId('Microsoft.Sql/servers', format('sql-{0}', parameters('workloadName')))).fullyQualifiedDomainName]"
-            },
             "sqlServerName": {
               "type": "string",
               "value": "[format('sql-{0}', parameters('workloadName'))]"
@@ -419,7 +440,8 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('workloadName')))]"
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Web/sites', format('app-{0}', parameters('workloadName')))]"
       ]
     },
     {

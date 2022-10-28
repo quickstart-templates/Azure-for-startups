@@ -6,6 +6,7 @@ param sqlServerAdminLoginUserName string
 @secure()
 param sqlServerAdminLoginPassword string
 param userAssignedManagedIdentityName string
+param webAppName string
 
 var sqlDatabaseMaxSizeBytes = sqlDatabaseMaxSizeGigabytes * 1024 * 1024 * 1024
 
@@ -64,6 +65,20 @@ resource sqlServerAdmin 'Microsoft.Sql/servers/administrators@2021-11-01' = {
   }
 }
 
-output sqlServerFullyQualifiedDomainName string = sqlServer.properties.fullyQualifiedDomainName
+resource webApp 'Microsoft.Web/sites@2022-03-01' existing = {
+  name: webAppName
+}
+
+resource webAppAppSettings 'Microsoft.Web/sites/config@2022-03-01' = {
+  name: 'appsettings'
+  parent: webApp
+  properties: {
+    SQL_DATABASE_NAME: sqlServerDatabase.name
+    SQL_DATABASE_PASSWORD: sqlServerAdminLoginPassword
+    SQL_DATABASE_SERVER: sqlServer.properties.fullyQualifiedDomainName
+    SQL_DATABASE_USERNAME: sqlServerAdminLoginUserName
+  }
+}
+
 output sqlServerName string = sqlServer.name
 output sqlServerDatabaseName string = sqlServerDatabase.name
