@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.11.1.770",
-      "templateHash": "8652946647700629124"
+      "templateHash": "14197577172772786320"
     }
   },
   "parameters": {
@@ -142,7 +142,9 @@
         "isEnabled": true
       }
     ],
-    "iotHubRoutes": "[if(parameters('optional'), concat(variables('iotHubRoutesBase'), createArray(createObject('name', 'toServiceBusTopic', 'source', 'DeviceMessages', 'condition', 'true', 'endpointNames', createArray('toServiceBusTopic'), 'isEnabled', true()))), variables('iotHubRoutesBase'))]"
+    "iotHubRoutes": "[if(parameters('optional'), concat(variables('iotHubRoutesBase'), createArray(createObject('name', 'toServiceBusTopic', 'source', 'DeviceMessages', 'condition', 'true', 'endpointNames', createArray('toServiceBusTopic'), 'isEnabled', true()))), variables('iotHubRoutesBase'))]",
+    "sqlServerName": "[format('sql-{0}', parameters('workloadName'))]",
+    "sqlServerDatabaseName": "[format('sqldb-{0}', parameters('workloadName'))]"
   },
   "resources": [
     {
@@ -303,6 +305,12 @@
           "sqlServerAdminLoginPassword": {
             "value": "[parameters('sqlServerAdminLoginPassword')]"
           },
+          "sqlServerName": {
+            "value": "[variables('sqlServerName')]"
+          },
+          "sqlServerDatabaseName": {
+            "value": "[variables('sqlServerDatabaseName')]"
+          },
           "userAssignedManagedIdentityName": {
             "value": "[format('id-{0}', parameters('workloadName'))]"
           },
@@ -317,7 +325,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.11.1.770",
-              "templateHash": "15497609706972698524"
+              "templateHash": "6813067344746967355"
             }
           },
           "parameters": {
@@ -341,6 +349,12 @@
             "sqlServerAdminLoginPassword": {
               "type": "secureString"
             },
+            "sqlServerName": {
+              "type": "string"
+            },
+            "sqlServerDatabaseName": {
+              "type": "string"
+            },
             "userAssignedManagedIdentityName": {
               "type": "string"
             },
@@ -355,7 +369,7 @@
             {
               "type": "Microsoft.Sql/servers",
               "apiVersion": "2021-11-01",
-              "name": "[format('sql-{0}', parameters('workloadName'))]",
+              "name": "[parameters('sqlServerName')]",
               "location": "[parameters('resourceGroupLocation')]",
               "properties": {
                 "administratorLogin": "[parameters('sqlServerAdminLoginUserName')]",
@@ -368,7 +382,7 @@
             {
               "type": "Microsoft.Sql/servers/databases",
               "apiVersion": "2021-11-01",
-              "name": "[format('{0}/{1}', format('sql-{0}', parameters('workloadName')), format('sqldb-{0}', parameters('workloadName')))]",
+              "name": "[format('{0}/{1}', parameters('sqlServerName'), parameters('sqlServerDatabaseName'))]",
               "location": "[parameters('resourceGroupLocation')]",
               "sku": {
                 "name": "GP_S_Gen5",
@@ -382,25 +396,25 @@
                 "createMode": "Default"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Sql/servers', format('sql-{0}', parameters('workloadName')))]"
+                "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
               ]
             },
             {
               "type": "Microsoft.Sql/servers/firewallRules",
               "apiVersion": "2021-11-01",
-              "name": "[format('{0}/{1}', format('sql-{0}', parameters('workloadName')), 'AllowAllWindowsAzureIps')]",
+              "name": "[format('{0}/{1}', parameters('sqlServerName'), 'AllowAllWindowsAzureIps')]",
               "properties": {
                 "startIpAddress": "0.0.0.0",
                 "endIpAddress": "0.0.0.0"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Sql/servers', format('sql-{0}', parameters('workloadName')))]"
+                "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
               ]
             },
             {
               "type": "Microsoft.Sql/servers/administrators",
               "apiVersion": "2021-11-01",
-              "name": "[format('{0}/{1}', format('sql-{0}', parameters('workloadName')), 'activeDirectory')]",
+              "name": "[format('{0}/{1}', parameters('sqlServerName'), 'activeDirectory')]",
               "properties": {
                 "administratorType": "ActiveDirectory",
                 "login": "[parameters('userAssignedManagedIdentityName')]",
@@ -408,7 +422,7 @@
                 "tenantId": "[subscription().tenantId]"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Sql/servers', format('sql-{0}', parameters('workloadName')))]"
+                "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
               ]
             },
             {
@@ -416,27 +430,17 @@
               "apiVersion": "2022-03-01",
               "name": "[format('{0}/{1}', parameters('webAppName'), 'appsettings')]",
               "properties": {
-                "SQL_DATABASE_NAME": "[format('sqldb-{0}', parameters('workloadName'))]",
+                "SQL_DATABASE_NAME": "[parameters('sqlServerDatabaseName')]",
                 "SQL_DATABASE_PASSWORD": "[parameters('sqlServerAdminLoginPassword')]",
-                "SQL_DATABASE_SERVER": "[reference(resourceId('Microsoft.Sql/servers', format('sql-{0}', parameters('workloadName')))).fullyQualifiedDomainName]",
+                "SQL_DATABASE_SERVER": "[reference(resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))).fullyQualifiedDomainName]",
                 "SQL_DATABASE_USERNAME": "[parameters('sqlServerAdminLoginUserName')]"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Sql/servers', format('sql-{0}', parameters('workloadName')))]",
-                "[resourceId('Microsoft.Sql/servers/databases', format('sql-{0}', parameters('workloadName')), format('sqldb-{0}', parameters('workloadName')))]"
+                "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]",
+                "[resourceId('Microsoft.Sql/servers/databases', parameters('sqlServerName'), parameters('sqlServerDatabaseName'))]"
               ]
             }
-          ],
-          "outputs": {
-            "sqlServerName": {
-              "type": "string",
-              "value": "[format('sql-{0}', parameters('workloadName'))]"
-            },
-            "sqlServerDatabaseName": {
-              "type": "string",
-              "value": "[format('sqldb-{0}', parameters('workloadName'))]"
-            }
-          }
+          ]
         }
       },
       "dependsOn": [
@@ -465,10 +469,10 @@
             "value": "[variables('iotHubName')]"
           },
           "sqlServerName": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deployment-sql-database'), '2020-10-01').outputs.sqlServerName.value]"
+            "value": "[variables('sqlServerName')]"
           },
           "sqlServerDatabaseName": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deployment-sql-database'), '2020-10-01').outputs.sqlServerDatabaseName.value]"
+            "value": "[variables('sqlServerDatabaseName')]"
           },
           "userAssignedManagedIdentityName": {
             "value": "[format('id-{0}', parameters('workloadName'))]"
@@ -591,7 +595,6 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Devices/IotHubs', variables('iotHubName'))]",
-        "[resourceId('Microsoft.Resources/deployments', 'deployment-sql-database')]",
         "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('workloadName')))]"
       ]
     },

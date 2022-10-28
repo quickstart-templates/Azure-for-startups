@@ -38,6 +38,11 @@ var resourceGroupLocation = resourceGroup().location
 // Role definition ID if Storage Account Blob Contributor
 var roleDefinitionIdStorageBlobDataContributor = resourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
 
+resource userAssignedManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = {
+  name: 'id-${workloadName}'
+  location: resourceGroupLocation
+}
+
 // IoT Hub --
 
 var iotHubName = 'iot-${workloadName}'
@@ -74,11 +79,6 @@ var iotHubRoutes = optional ? concat(iotHubRoutesBase, [
     isEnabled: true
   }
 ]) : iotHubRoutesBase
-
-resource userAssignedManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = {
-  name: 'id-${workloadName}'
-  location: resourceGroupLocation
-}
 
 resource iotHub 'Microsoft.Devices/IotHubs@2022-04-30-preview' = {
   name: iotHubName
@@ -194,6 +194,9 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
   }
 }
 
+var sqlServerName = 'sql-${workloadName}'
+var sqlServerDatabaseName = 'sqldb-${workloadName}'
+
 module sqlServer 'optional/sql-server.bicep' = if (optional) {
   name: 'deployment-sql-database'
   params: {
@@ -203,6 +206,8 @@ module sqlServer 'optional/sql-server.bicep' = if (optional) {
     sqlDatabaseMaxSizeGigabytes: sqlDatabaseMaxSizeGigabytes
     sqlServerAdminLoginUserName: sqlServerAdminLoginUserName
     sqlServerAdminLoginPassword: sqlServerAdminLoginPassword
+    sqlServerName: sqlServerName
+    sqlServerDatabaseName: sqlServerDatabaseName
     userAssignedManagedIdentityName: userAssignedManagedIdentity.name
     webAppName: webApp.name
   }
@@ -214,8 +219,8 @@ module streamAnalytics 'optional/stream-analytics.bicep' = if (optional) {
     workloadName: workloadName
     resourceGroupLocation: resourceGroupLocation
     iotHubName: iotHub.name
-    sqlServerName: sqlServer.outputs.sqlServerName
-    sqlServerDatabaseName: sqlServer.outputs.sqlServerDatabaseName
+    sqlServerName: sqlServerName
+    sqlServerDatabaseName: sqlServerDatabaseName
     userAssignedManagedIdentityName: userAssignedManagedIdentity.name
   }
 }

@@ -5,6 +5,8 @@ param sqlDatabaseMaxSizeGigabytes int = 32
 param sqlServerAdminLoginUserName string
 @secure()
 param sqlServerAdminLoginPassword string
+param sqlServerName string
+param sqlServerDatabaseName string
 param userAssignedManagedIdentityName string
 param webAppName string
 
@@ -17,7 +19,7 @@ resource userAssignedManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIden
 // SQL Server --
 
 resource sqlServer 'Microsoft.Sql/servers@2021-11-01' = {
-  name: 'sql-${workloadName}'
+  name: sqlServerName
   location: resourceGroupLocation
   properties: {
     administratorLogin: sqlServerAdminLoginUserName
@@ -29,7 +31,7 @@ resource sqlServer 'Microsoft.Sql/servers@2021-11-01' = {
 }
 
 resource sqlServerDatabase 'Microsoft.Sql/servers/databases@2021-11-01' = {
-  name: 'sqldb-${workloadName}'
+  name: sqlServerDatabaseName
   parent: sqlServer
   location: resourceGroupLocation
   sku: {
@@ -79,6 +81,3 @@ resource webAppAppSettings 'Microsoft.Web/sites/config@2022-03-01' = {
     SQL_DATABASE_USERNAME: sqlServerAdminLoginUserName
   }
 }
-
-output sqlServerName string = sqlServer.name
-output sqlServerDatabaseName string = sqlServerDatabase.name
