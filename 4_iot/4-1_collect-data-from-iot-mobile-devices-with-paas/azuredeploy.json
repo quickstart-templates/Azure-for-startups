@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.11.1.770",
-      "templateHash": "15253353035127612226"
+      "templateHash": "14437729443595287386"
     }
   },
   "parameters": {
@@ -123,6 +123,15 @@
     "roleDefinitionIdStorageBlobDataContributor": "[resourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
     "iotHubName": "[format('iot-{0}', parameters('workloadName'))]",
     "iotHubRoutesBase": [
+      {
+        "name": "default",
+        "source": "DeviceMessages",
+        "condition": "true",
+        "endpointNames": [
+          "events"
+        ],
+        "isEnabled": true
+      },
       {
         "name": "toStorage",
         "source": "DeviceMessages",

@@ -72,6 +72,15 @@ var iotHubName = 'iot-${workloadName}'
 
 var iotHubRoutesBase = [
   {
+    name: 'default'
+    source: 'DeviceMessages'
+    condition: 'true'
+    endpointNames: [
+      'events'
+    ]
+    isEnabled: true
+  }
+  {
     name: 'toStorage'
     source: 'DeviceMessages'
     condition: 'true'
