@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.11.1.770",
-      "templateHash": "14197577172772786320"
+      "templateHash": "16713761389694988860"
     }
   },
   "parameters": {
@@ -602,77 +602,6 @@
       "condition": "[parameters('optional')]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2020-10-01",
-      "name": "deployment-dps",
-      "properties": {
-        "expressionEvaluationOptions": {
-          "scope": "inner"
-        },
-        "mode": "Incremental",
-        "parameters": {
-          "workloadName": {
-            "value": "[parameters('workloadName')]"
-          },
-          "resourceGroupLocation": {
-            "value": "[variables('resourceGroupLocation')]"
-          },
-          "iotHubName": {
-            "value": "[variables('iotHubName')]"
-          }
-        },
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "metadata": {
-            "_generator": {
-              "name": "bicep",
-              "version": "0.11.1.770",
-              "templateHash": "5265294406166313085"
-            }
-          },
-          "parameters": {
-            "workloadName": {
-              "type": "string"
-            },
-            "resourceGroupLocation": {
-              "type": "string"
-            },
-            "iotHubName": {
-              "type": "string"
-            }
-          },
-          "variables": {
-            "iotHubKey": "iothubowner"
-          },
-          "resources": [
-            {
-              "type": "Microsoft.Devices/provisioningServices",
-              "apiVersion": "2022-02-05",
-              "name": "[format('provs-{0}', parameters('workloadName'))]",
-              "location": "[parameters('resourceGroupLocation')]",
-              "sku": {
-                "name": "S1",
-                "capacity": 1
-              },
-              "properties": {
-                "iotHubs": [
-                  {
-                    "connectionString": "[format('HostName={0};SharedAccessKeyName={1};SharedAccessKey={2}', reference(resourceId('Microsoft.Devices/IotHubs', parameters('iotHubName')), '2022-04-30-preview').hostName, variables('iotHubKey'), listkeys(resourceId('Microsoft.Devices/IotHubs', parameters('iotHubName')), '2022-04-30-preview').value)]",
-                    "location": "[reference(resourceId('Microsoft.Devices/IotHubs', parameters('iotHubName')), '2022-04-30-preview', 'full').location]"
-                  }
-                ]
-              }
-            }
-          ]
-        }
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Devices/IotHubs', variables('iotHubName'))]"
-      ]
-    },
-    {
-      "condition": "[parameters('optional')]",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
       "name": "deployment-service-bus",
       "properties": {
         "expressionEvaluationOptions": {
@@ -689,8 +618,8 @@
           "serviceBusTier": {
             "value": "[parameters('serviceBusTier')]"
           },
-          "userAssignedManagedIdentityName": {
-            "value": "[format('id-{0}', parameters('workloadName'))]"
+          "userAssignedManagedIdentityPrincipalId": {
+            "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('workloadName')))).principalId]"
           },
           "iotHubName": {
             "value": "[variables('iotHubName')]"
@@ -703,7 +632,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.11.1.770",
-              "templateHash": "16215523602577570056"
+              "templateHash": "4880330798665287037"
             }
           },
           "parameters": {
@@ -722,7 +651,7 @@
                 "Premium"
               ]
             },
-            "userAssignedManagedIdentityName": {
+            "userAssignedManagedIdentityPrincipalId": {
               "type": "string"
             },
             "iotHubName": {
@@ -763,7 +692,7 @@
               "name": "[guid(resourceId('Microsoft.ServiceBus/namespaces', format('sb-{0}', parameters('workloadName'))), variables('roleDefinitionIdServiceBusDataSender'), resourceId('Microsoft.Devices/IotHubs', parameters('iotHubName')))]",
               "properties": {
                 "roleDefinitionId": "[variables('roleDefinitionIdServiceBusDataSender')]",
-                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('userAssignedManagedIdentityName')), '2022-01-31-preview').principalId]"
+                "principalId": "[parameters('userAssignedManagedIdentityPrincipalId')]"
               },
               "dependsOn": [
                 "[resourceId('Microsoft.ServiceBus/namespaces', format('sb-{0}', parameters('workloadName')))]"

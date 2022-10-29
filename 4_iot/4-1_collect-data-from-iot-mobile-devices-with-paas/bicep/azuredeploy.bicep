@@ -225,22 +225,13 @@ module streamAnalytics 'optional/stream-analytics.bicep' = if (optional) {
   }
 }
 
-module dps 'optional/dps.bicep' = if (optional) {
-  name: 'deployment-dps'
-  params: {
-    workloadName: workloadName
-    resourceGroupLocation: resourceGroupLocation
-    iotHubName: iotHub.name
-  }
-}
-
 module serviceBus 'optional/service-bus.bicep' = if (optional) {
   name: 'deployment-service-bus'
   params: {
     workloadName: workloadName
     resourceGroupLocation: resourceGroupLocation
     serviceBusTier: serviceBusTier
-    userAssignedManagedIdentityName: userAssignedManagedIdentity.name
+    userAssignedManagedIdentityPrincipalId: userAssignedManagedIdentity.properties.principalId
     iotHubName: iotHubName
   }
 }

@@ -2,15 +2,8 @@ param workloadName string
 param resourceGroupLocation string
 @allowed(['Basic', 'Standard', 'Premium'])
 param serviceBusTier string = 'Standard'
-param userAssignedManagedIdentityName string
+param userAssignedManagedIdentityPrincipalId string
 param iotHubName string
-
-// Role definition ID if Azure Service Bus Data Sender
-var roleDefinitionIdServiceBusDataSender = resourceId('Microsoft.Authorization/roleDefinitions', '69a216fc-b8fb-44d8-bc22-1f3c2cd27a39')
-
-resource userAssignedManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' existing = {
-  name: userAssignedManagedIdentityName
-}
 
 // Service Bus --
 
@@ -33,12 +26,15 @@ resource serviceBusTopic 'Microsoft.ServiceBus/namespaces/topics@2022-01-01-prev
   }
 }
 
+// Role definition ID if Azure Service Bus Data Sender
+var roleDefinitionIdServiceBusDataSender = resourceId('Microsoft.Authorization/roleDefinitions', '69a216fc-b8fb-44d8-bc22-1f3c2cd27a39')
+
 resource roleAssignmentServiceBus 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: serviceBus
   name: guid(serviceBus.id, roleDefinitionIdServiceBusDataSender, resourceId('Microsoft.Devices/IotHubs', iotHubName))
   properties: {
     roleDefinitionId: roleDefinitionIdServiceBusDataSender
-    principalId: userAssignedManagedIdentity.properties.principalId
+    principalId: userAssignedManagedIdentityPrincipalId
   }
 }
 
