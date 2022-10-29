@@ -1,0 +1,328 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.11.1.770",
+      "templateHash": "5657394591607666375"
+    }
+  },
+  "parameters": {
+    "workloadName": {
+      "type": "string",
+      "metadata": {
+        "description": "リソース名に付与する識別用の文字列（プロジェクト名など）を入力してください"
+      }
+    },
+    "storageAccountSkuCode": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Premium_LRS",
+        "Premium_ZRS",
+        "Standard_GRS",
+        "Standard_GZRS",
+        "Standard_LRS",
+        "Standard_RAGRS",
+        "Standard_RAGZRS",
+        "Standard_ZRS"
+      ],
+      "metadata": {
+        "description": "Azure Storage Account の SKU を選択してください"
+      }
+    },
+    "appServicePlanSkuCode": {
+      "type": "string",
+      "defaultValue": "P1v2",
+      "allowedValues": [
+        "F1",
+        "B1",
+        "B2",
+        "B3",
+        "D1",
+        "S1",
+        "S2",
+        "S3",
+        "Y1",
+        "P1v2",
+        "P2v2",
+        "P3v2",
+        "P1v3",
+        "P2v3",
+        "P3v3"
+      ],
+      "metadata": {
+        "description": "Azure App Service Plan のプランを選択してください"
+      }
+    },
+    "sqlDatabaseCollation": {
+      "type": "string",
+      "defaultValue": "Japanese_CI_AS",
+      "metadata": {
+        "description": "Azure SQL Database の照合順序を選択してください"
+      }
+    }
+  },
+  "variables": {
+    "resourceGroupLocation": "[resourceGroup().location]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2022-01-31-preview",
+      "name": "[format('id-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]"
+    },
+    {
+      "type": "Microsoft.DataFactory/factories",
+      "apiVersion": "2018-06-01",
+      "name": "[format('fd-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "properties": {},
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": "[json(format('{{\"{0}\": {{}}}}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('workloadName')))))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DataFactory/factories/credentials",
+      "apiVersion": "2018-06-01",
+      "name": "[format('{0}/{1}', format('fd-{0}', parameters('workloadName')), 'credential1')]",
+      "properties": {
+        "type": "ManagedIdentity",
+        "typeProperties": {
+          "resourceId": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('workloadName')))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DataFactory/factories', format('fd-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DataFactory/factories/linkedservices",
+      "apiVersion": "2018-06-01",
+      "name": "[format('{0}/{1}', format('fd-{0}', parameters('workloadName')), 'AzureSynapseAnalytics1')]",
+      "properties": {
+        "type": "AzureSqlDW",
+        "typeProperties": {
+          "connectionString": "[format('Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source={0}.sql.azuresynapse.net;Initial Catalog={1}', format('syn-{0}', parameters('workloadName')), format('syndp{0}', join(split(parameters('workloadName'), '-'), '')))]",
+          "credential": {
+            "referenceName": "credential1",
+            "type": "CredentialReference"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DataFactory/factories', format('fd-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.DataFactory/factories/credentials', format('fd-{0}', parameters('workloadName')), 'credential1')]",
+        "[resourceId('Microsoft.Synapse/workspaces', format('syn-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Synapse/workspaces/sqlPools', format('syn-{0}', parameters('workloadName')), format('syndp{0}', join(split(parameters('workloadName'), '-'), '')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2022-05-01",
+      "name": "[format('st{0}', uniqueString(resourceGroup().id, 'func'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "sku": {
+        "name": "[parameters('storageAccountSkuCode')]"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "minimumTlsVersion": "TLS1_2",
+        "supportsHttpsTrafficOnly": true
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2022-03-01",
+      "name": "[format('plan-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "sku": {
+        "name": "[parameters('appServicePlanSkuCode')]"
+      },
+      "kind": "app",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2022-03-01",
+      "name": "[format('func-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "kind": "functionapp",
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', parameters('workloadName')))]",
+        "httpsOnly": true,
+        "siteConfig": {
+          "alwaysOn": true,
+          "minTlsVersion": "1.2",
+          "ftpsState": "Disabled",
+          "http20Enabled": true,
+          "appSettings": [
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', format('st{0}', uniqueString(resourceGroup().id, 'func')), listKeys(resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(resourceGroup().id, 'func'))), '2022-05-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', format('st{0}', uniqueString(resourceGroup().id, 'func')), listKeys(resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(resourceGroup().id, 'func'))), '2022-05-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTSHARE",
+              "value": "[toLower(format('func-{0}', parameters('workloadName')))]"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~4"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "node"
+            },
+            {
+              "name": "WEBSITE_NODE_DEFAULT_VERSION",
+              "value": "~16"
+            },
+            {
+              "name": "SQL_DATABASE_SERVER",
+              "value": "[format('{0}.sql.azuresynapse.net', format('syn-{0}', parameters('workloadName')))]"
+            },
+            {
+              "name": "SQL_DATABASE_NAME",
+              "value": "[format('syndp{0}', join(split(parameters('workloadName'), '-'), ''))]"
+            },
+            {
+              "name": "USER_ASSIGNED_IDENTITY_CLIENT_ID",
+              "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('workloadName')))).clientId]"
+            }
+          ],
+          "cors": {
+            "allowedOrigins": [
+              "https://portal.azure.com"
+            ]
+          }
+        }
+      },
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": "[json(format('{{\"{0}\": {{}}}}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('workloadName')))))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(resourceGroup().id, 'func')))]",
+        "[resourceId('Microsoft.Synapse/workspaces', format('syn-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Synapse/workspaces/sqlPools', format('syn-{0}', parameters('workloadName')), format('syndp{0}', join(split(parameters('workloadName'), '-'), '')))]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2022-05-01",
+      "name": "[format('st{0}', uniqueString(resourceGroup().id, 'synapse'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "sku": {
+        "name": "[parameters('storageAccountSkuCode')]"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "minimumTlsVersion": "TLS1_2",
+        "supportsHttpsTrafficOnly": true,
+        "isHnsEnabled": true
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices",
+      "apiVersion": "2022-05-01",
+      "name": "[format('{0}/{1}', format('st{0}', uniqueString(resourceGroup().id, 'synapse')), 'default')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(resourceGroup().id, 'synapse')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2022-05-01",
+      "name": "[format('{0}/{1}/{2}', format('st{0}', uniqueString(resourceGroup().id, 'synapse')), 'default', 'data')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', format('st{0}', uniqueString(resourceGroup().id, 'synapse')), 'default')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Synapse/workspaces",
+      "apiVersion": "2021-06-01",
+      "name": "[format('syn-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "properties": {
+        "defaultDataLakeStorage": {
+          "resourceId": "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(resourceGroup().id, 'synapse')))]",
+          "accountUrl": "[format('https://{0}.dfs.{1}', format('st{0}', uniqueString(resourceGroup().id, 'synapse')), environment().suffixes.storage)]",
+          "filesystem": "data"
+        },
+        "trustedServiceBypassEnabled": true
+      },
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', uniqueString(resourceGroup().id, 'synapse')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Synapse/workspaces/administrators",
+      "apiVersion": "2021-06-01",
+      "name": "[format('{0}/{1}', format('syn-{0}', parameters('workloadName')), 'activeDirectory')]",
+      "properties": {
+        "login": "[format('id-{0}', parameters('workloadName'))]",
+        "sid": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('workloadName')))).principalId]",
+        "tenantId": "[subscription().tenantId]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Synapse/workspaces', format('syn-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Synapse/workspaces/azureADOnlyAuthentications",
+      "apiVersion": "2021-06-01",
+      "name": "[format('{0}/{1}', format('syn-{0}', parameters('workloadName')), 'default')]",
+      "properties": {
+        "azureADOnlyAuthentication": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Synapse/workspaces', format('syn-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Synapse/workspaces/firewallRules",
+      "apiVersion": "2021-06-01",
+      "name": "[format('{0}/{1}', format('syn-{0}', parameters('workloadName')), 'AllowAllWindowsAzureIps')]",
+      "properties": {
+        "startIpAddress": "0.0.0.0",
+        "endIpAddress": "0.0.0.0"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Synapse/workspaces', format('syn-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Synapse/workspaces/sqlPools",
+      "apiVersion": "2021-06-01",
+      "name": "[format('{0}/{1}', format('syn-{0}', parameters('workloadName')), format('syndp{0}', join(split(parameters('workloadName'), '-'), '')))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "sku": {
+        "name": "DW100c"
+      },
+      "properties": {
+        "collation": "[parameters('sqlDatabaseCollation')]",
+        "storageAccountType": "LRS"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Synapse/workspaces', format('syn-{0}', parameters('workloadName')))]"
+      ]
+    }
+  ]
+}
