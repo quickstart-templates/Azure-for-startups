@@ -18,6 +18,12 @@
 - [3-2 社内データとオープンデータからインサイトを抽出したい](./3_data-analysis-visialization/3-2_extract-insights-from-internal-and-opendata/)
 
 
+
+### 4 IoT
+
+- [4-1 IoTデバイス or スマホからデータ取得・可視化（PaaS）](./4_iot/4-1_collect-data-from-iot-mobile-devices-with-paas/)
+
+
 ### 7 バックアップ
 
 - [7-2 リージョン障害時も運用継続したい（Webアプリケーション編）](./7_backup/7-2_disaster-recorvery-webapp/)

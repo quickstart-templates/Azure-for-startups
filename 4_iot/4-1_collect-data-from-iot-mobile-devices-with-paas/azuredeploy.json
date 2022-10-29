@@ -1,0 +1,719 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.11.1.770",
+      "templateHash": "16713761389694988860"
+    }
+  },
+  "parameters": {
+    "workloadName": {
+      "type": "string",
+      "metadata": {
+        "description": "リソース名に付与する識別用の文字列（プロジェクト名など）を入力してください"
+      }
+    },
+    "storageAccountSkuCode": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Premium_LRS",
+        "Premium_ZRS",
+        "Standard_GRS",
+        "Standard_GZRS",
+        "Standard_LRS",
+        "Standard_RAGRS",
+        "Standard_RAGZRS",
+        "Standard_ZRS"
+      ],
+      "metadata": {
+        "description": "Azure Storage Account の SKU を選択してください"
+      }
+    },
+    "appServicePlanSkuCode": {
+      "type": "string",
+      "defaultValue": "F1",
+      "allowedValues": [
+        "F1",
+        "B1",
+        "B2",
+        "B3",
+        "S1",
+        "S2",
+        "S3",
+        "P1v2",
+        "P2v2",
+        "P3v2",
+        "P1v3",
+        "P2v3",
+        "P3v3"
+      ],
+      "metadata": {
+        "description": "Azure App Service Plan のプランを選択してください"
+      }
+    },
+    "iotHubSkuCode": {
+      "type": "string",
+      "defaultValue": "F1",
+      "allowedValues": [
+        "F1",
+        "B1",
+        "B2",
+        "B3",
+        "S1",
+        "S2",
+        "S3"
+      ],
+      "metadata": {
+        "description": "Azure IoT Hub のプランを選択してください"
+      }
+    },
+    "optional": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Optional の構成を有効にするか選択してください"
+      }
+    },
+    "sqlDatabaseCollation": {
+      "type": "string",
+      "defaultValue": "Japanese_CI_AS",
+      "metadata": {
+        "description": "Azure SQL Database の照合順序を選択してください"
+      }
+    },
+    "sqlDatabaseMaxSizeGigabytes": {
+      "type": "int",
+      "defaultValue": 32,
+      "metadata": {
+        "description": "Azure SQL Database の最大サイズを入力してください（GB）"
+      }
+    },
+    "sqlServerAdminLoginUserName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Azure SQL Server の管理者ユーザー名を入力してください"
+      }
+    },
+    "sqlServerAdminLoginPassword": {
+      "type": "secureString",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Azure SQL Server の管理者パスワードを入力してください"
+      }
+    },
+    "serviceBusTier": {
+      "type": "string",
+      "defaultValue": "Standard",
+      "allowedValues": [
+        "Basic",
+        "Standard",
+        "Premium"
+      ],
+      "metadata": {
+        "description": "Azure Service Bus のティアを選択してください"
+      }
+    }
+  },
+  "variables": {
+    "resourceGroupLocation": "[resourceGroup().location]",
+    "roleDefinitionIdStorageBlobDataContributor": "[resourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
+    "iotHubName": "[format('iot-{0}', parameters('workloadName'))]",
+    "iotHubRoutesBase": [
+      {
+        "name": "default",
+        "source": "DeviceMessages",
+        "condition": "true",
+        "endpointNames": [
+          "events"
+        ],
+        "isEnabled": true
+      },
+      {
+        "name": "toStorage",
+        "source": "DeviceMessages",
+        "condition": "true",
+        "endpointNames": [
+          "storage"
+        ],
+        "isEnabled": true
+      }
+    ],
+    "iotHubRoutes": "[if(parameters('optional'), concat(variables('iotHubRoutesBase'), createArray(createObject('name', 'toServiceBusTopic', 'source', 'DeviceMessages', 'condition', 'true', 'endpointNames', createArray('toServiceBusTopic'), 'isEnabled', true()))), variables('iotHubRoutesBase'))]",
+    "sqlServerName": "[format('sql-{0}', parameters('workloadName'))]",
+    "sqlServerDatabaseName": "[format('sqldb-{0}', parameters('workloadName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2022-01-31-preview",
+      "name": "[format('id-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]"
+    },
+    {
+      "type": "Microsoft.Devices/IotHubs",
+      "apiVersion": "2022-04-30-preview",
+      "name": "[variables('iotHubName')]",
+      "location": "[variables('resourceGroupLocation')]",
+      "sku": {
+        "name": "[parameters('iotHubSkuCode')]",
+        "capacity": 1
+      },
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": "[json(format('{{\"{0}\": {{}}}}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('workloadName')))))]"
+      },
+      "properties": {
+        "routing": {
+          "endpoints": {
+            "storageContainers": [
+              {
+                "name": "storage",
+                "containerName": "data",
+                "fileNameFormat": "{iothub}/{partition}/{YYYY}/{MM}/{DD}/{HH}/{mm}.json",
+                "encoding": "json",
+                "endpointUri": "[format('https://{0}.blob.{1}', format('st{0}', join(split(parameters('workloadName'), '-'), '')), environment().suffixes.storage)]",
+                "authenticationType": "identityBased",
+                "identity": {
+                  "userAssignedIdentity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('workloadName')))]"
+                }
+              }
+            ],
+            "serviceBusTopics": "[if(parameters('optional'), createArray(createObject('name', 'toServiceBusTopic', 'endpointUri', format('sb://{0}.servicebus.windows.net', reference(resourceId('Microsoft.Resources/deployments', 'deployment-service-bus'), '2020-10-01').outputs.serviceBusName.value), 'entityPath', reference(resourceId('Microsoft.Resources/deployments', 'deployment-service-bus'), '2020-10-01').outputs.serviceBusTopicName.value, 'authenticationType', 'identityBased', 'identity', createObject('userAssignedIdentity', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('workloadName')))))), null())]"
+          },
+          "routes": "[variables('iotHubRoutes')]"
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(resourceId('Microsoft.Storage/storageAccounts', format('st{0}', join(split(parameters('workloadName'), '-'), ''))), 'Microsoft.Authorization/roleAssignments', guid(resourceId('Microsoft.Storage/storageAccounts', format('st{0}', join(split(parameters('workloadName'), '-'), ''))), variables('roleDefinitionIdStorageBlobDataContributor'), resourceId('Microsoft.Devices/IotHubs', variables('iotHubName'))))]",
+        "[resourceId('Microsoft.Resources/deployments', 'deployment-service-bus')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', join(split(parameters('workloadName'), '-'), '')))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', format('st{0}', join(split(parameters('workloadName'), '-'), '')), 'default', 'data')]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2022-05-01",
+      "name": "[format('st{0}', join(split(parameters('workloadName'), '-'), ''))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "sku": {
+        "name": "[parameters('storageAccountSkuCode')]"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "minimumTlsVersion": "TLS1_2",
+        "supportsHttpsTrafficOnly": true
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[format('Microsoft.Storage/storageAccounts/{0}', format('st{0}', join(split(parameters('workloadName'), '-'), '')))]",
+      "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', format('st{0}', join(split(parameters('workloadName'), '-'), ''))), variables('roleDefinitionIdStorageBlobDataContributor'), resourceId('Microsoft.Devices/IotHubs', variables('iotHubName')))]",
+      "properties": {
+        "roleDefinitionId": "[variables('roleDefinitionIdStorageBlobDataContributor')]",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('workloadName')))).principalId]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', join(split(parameters('workloadName'), '-'), '')))]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices",
+      "apiVersion": "2022-05-01",
+      "name": "[format('{0}/{1}', format('st{0}', join(split(parameters('workloadName'), '-'), '')), 'default')]",
+      "properties": {},
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', join(split(parameters('workloadName'), '-'), '')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2022-05-01",
+      "name": "[format('{0}/{1}/{2}', format('st{0}', join(split(parameters('workloadName'), '-'), '')), 'default', 'data')]",
+      "properties": {},
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', format('st{0}', join(split(parameters('workloadName'), '-'), '')), 'default')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2022-03-01",
+      "name": "[format('plan-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "sku": {
+        "name": "[parameters('appServicePlanSkuCode')]"
+      },
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2022-03-01",
+      "name": "[format('app-{0}', parameters('workloadName'))]",
+      "location": "[variables('resourceGroupLocation')]",
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', parameters('workloadName')))]",
+        "siteConfig": {
+          "alwaysOn": "[not(contains(createArray('F1', 'D1'), parameters('appServicePlanSkuCode')))]",
+          "http20Enabled": true,
+          "ftpsState": "Disabled",
+          "appSettings": [
+            {
+              "name": "STORAGE_ACCOUNT_CONNECTION_STRING",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix={2}', format('st{0}', join(split(parameters('workloadName'), '-'), '')), listKeys(resourceId('Microsoft.Storage/storageAccounts', format('st{0}', join(split(parameters('workloadName'), '-'), ''))), '2022-05-01').keys[0].value, environment().suffixes.storage)]"
+            }
+          ]
+        },
+        "httpsOnly": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', join(split(parameters('workloadName'), '-'), '')))]"
+      ]
+    },
+    {
+      "condition": "[parameters('optional')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "deployment-sql-database",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "workloadName": {
+            "value": "[parameters('workloadName')]"
+          },
+          "resourceGroupLocation": {
+            "value": "[variables('resourceGroupLocation')]"
+          },
+          "sqlDatabaseCollation": {
+            "value": "[parameters('sqlDatabaseCollation')]"
+          },
+          "sqlDatabaseMaxSizeGigabytes": {
+            "value": "[parameters('sqlDatabaseMaxSizeGigabytes')]"
+          },
+          "sqlServerAdminLoginUserName": {
+            "value": "[parameters('sqlServerAdminLoginUserName')]"
+          },
+          "sqlServerAdminLoginPassword": {
+            "value": "[parameters('sqlServerAdminLoginPassword')]"
+          },
+          "sqlServerName": {
+            "value": "[variables('sqlServerName')]"
+          },
+          "sqlServerDatabaseName": {
+            "value": "[variables('sqlServerDatabaseName')]"
+          },
+          "userAssignedManagedIdentityName": {
+            "value": "[format('id-{0}', parameters('workloadName'))]"
+          },
+          "webAppName": {
+            "value": "[format('app-{0}', parameters('workloadName'))]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.11.1.770",
+              "templateHash": "6813067344746967355"
+            }
+          },
+          "parameters": {
+            "workloadName": {
+              "type": "string"
+            },
+            "resourceGroupLocation": {
+              "type": "string"
+            },
+            "sqlDatabaseCollation": {
+              "type": "string",
+              "defaultValue": "Japanese_CI_AS"
+            },
+            "sqlDatabaseMaxSizeGigabytes": {
+              "type": "int",
+              "defaultValue": 32
+            },
+            "sqlServerAdminLoginUserName": {
+              "type": "string"
+            },
+            "sqlServerAdminLoginPassword": {
+              "type": "secureString"
+            },
+            "sqlServerName": {
+              "type": "string"
+            },
+            "sqlServerDatabaseName": {
+              "type": "string"
+            },
+            "userAssignedManagedIdentityName": {
+              "type": "string"
+            },
+            "webAppName": {
+              "type": "string"
+            }
+          },
+          "variables": {
+            "sqlDatabaseMaxSizeBytes": "[mul(mul(mul(parameters('sqlDatabaseMaxSizeGigabytes'), 1024), 1024), 1024)]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Sql/servers",
+              "apiVersion": "2021-11-01",
+              "name": "[parameters('sqlServerName')]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "properties": {
+                "administratorLogin": "[parameters('sqlServerAdminLoginUserName')]",
+                "administratorLoginPassword": "[parameters('sqlServerAdminLoginPassword')]",
+                "version": "12.0",
+                "minimalTlsVersion": "1.2",
+                "publicNetworkAccess": "Enabled"
+              }
+            },
+            {
+              "type": "Microsoft.Sql/servers/databases",
+              "apiVersion": "2021-11-01",
+              "name": "[format('{0}/{1}', parameters('sqlServerName'), parameters('sqlServerDatabaseName'))]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "sku": {
+                "name": "GP_S_Gen5",
+                "tier": "GeneralPurpose",
+                "family": "Gen5",
+                "capacity": 1
+              },
+              "properties": {
+                "collation": "[parameters('sqlDatabaseCollation')]",
+                "maxSizeBytes": "[variables('sqlDatabaseMaxSizeBytes')]",
+                "createMode": "Default"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Sql/servers/firewallRules",
+              "apiVersion": "2021-11-01",
+              "name": "[format('{0}/{1}', parameters('sqlServerName'), 'AllowAllWindowsAzureIps')]",
+              "properties": {
+                "startIpAddress": "0.0.0.0",
+                "endIpAddress": "0.0.0.0"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Sql/servers/administrators",
+              "apiVersion": "2021-11-01",
+              "name": "[format('{0}/{1}', parameters('sqlServerName'), 'activeDirectory')]",
+              "properties": {
+                "administratorType": "ActiveDirectory",
+                "login": "[parameters('userAssignedManagedIdentityName')]",
+                "sid": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('userAssignedManagedIdentityName')), '2022-01-31-preview').principalId]",
+                "tenantId": "[subscription().tenantId]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Web/sites/config",
+              "apiVersion": "2022-03-01",
+              "name": "[format('{0}/{1}', parameters('webAppName'), 'appsettings')]",
+              "properties": {
+                "SQL_DATABASE_NAME": "[parameters('sqlServerDatabaseName')]",
+                "SQL_DATABASE_PASSWORD": "[parameters('sqlServerAdminLoginPassword')]",
+                "SQL_DATABASE_SERVER": "[reference(resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))).fullyQualifiedDomainName]",
+                "SQL_DATABASE_USERNAME": "[parameters('sqlServerAdminLoginUserName')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]",
+                "[resourceId('Microsoft.Sql/servers/databases', parameters('sqlServerName'), parameters('sqlServerDatabaseName'))]"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('workloadName')))]",
+        "[resourceId('Microsoft.Web/sites', format('app-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "condition": "[parameters('optional')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "deployment-stream-analytics",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "workloadName": {
+            "value": "[parameters('workloadName')]"
+          },
+          "resourceGroupLocation": {
+            "value": "[variables('resourceGroupLocation')]"
+          },
+          "iotHubName": {
+            "value": "[variables('iotHubName')]"
+          },
+          "sqlServerName": {
+            "value": "[variables('sqlServerName')]"
+          },
+          "sqlServerDatabaseName": {
+            "value": "[variables('sqlServerDatabaseName')]"
+          },
+          "userAssignedManagedIdentityName": {
+            "value": "[format('id-{0}', parameters('workloadName'))]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.11.1.770",
+              "templateHash": "14587411334823691317"
+            }
+          },
+          "parameters": {
+            "workloadName": {
+              "type": "string"
+            },
+            "resourceGroupLocation": {
+              "type": "string"
+            },
+            "iotHubName": {
+              "type": "string"
+            },
+            "sqlServerName": {
+              "type": "string"
+            },
+            "sqlServerDatabaseName": {
+              "type": "string"
+            },
+            "userAssignedManagedIdentityName": {
+              "type": "string"
+            }
+          },
+          "variables": {
+            "iotHubConsumerGroupStreamAnalytics": "stream-analytics",
+            "streamAnalyticsInputName": "iothub",
+            "streamAnalyticsOutputName": "streamData"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Devices/IotHubs/eventHubEndpoints/ConsumerGroups",
+              "apiVersion": "2022-04-30-preview",
+              "name": "[format('{0}/events/{1}', parameters('iotHubName'), variables('iotHubConsumerGroupStreamAnalytics'))]",
+              "properties": {
+                "name": "[variables('iotHubConsumerGroupStreamAnalytics')]"
+              }
+            },
+            {
+              "type": "Microsoft.StreamAnalytics/streamingjobs",
+              "apiVersion": "2021-10-01-preview",
+              "name": "[format('asa-{0}', parameters('workloadName'))]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": "[json(format('{{\"{0}\": {{}}}}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('userAssignedManagedIdentityName'))))]"
+              },
+              "properties": {
+                "sku": {
+                  "name": "Standard"
+                },
+                "jobType": "Cloud",
+                "transformation": {
+                  "name": "Transformation",
+                  "properties": {
+                    "query": "[format('SELECT * INTO [{0}] FROM [{1}]', variables('streamAnalyticsOutputName'), variables('streamAnalyticsInputName'))]"
+                  }
+                }
+              }
+            },
+            {
+              "type": "Microsoft.StreamAnalytics/streamingjobs/inputs",
+              "apiVersion": "2021-10-01-preview",
+              "name": "[format('{0}/{1}', format('asa-{0}', parameters('workloadName')), variables('streamAnalyticsInputName'))]",
+              "properties": {
+                "type": "Stream",
+                "datasource": {
+                  "type": "Microsoft.Devices/IotHubs",
+                  "properties": {
+                    "iotHubNamespace": "[parameters('iotHubName')]",
+                    "sharedAccessPolicyName": "service",
+                    "sharedAccessPolicyKey": "[listKeys(resourceId('Microsoft.Devices/IoTHubs/IoTHubKeys', parameters('iotHubName'), 'service'), '2022-04-30-preview').primaryKey]",
+                    "endpoint": "messages/events",
+                    "consumerGroupName": "[variables('iotHubConsumerGroupStreamAnalytics')]"
+                  }
+                },
+                "serialization": {
+                  "type": "Json",
+                  "properties": {
+                    "encoding": "UTF8"
+                  }
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.StreamAnalytics/streamingjobs', format('asa-{0}', parameters('workloadName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.StreamAnalytics/streamingjobs/outputs",
+              "apiVersion": "2021-10-01-preview",
+              "name": "[format('{0}/{1}', format('asa-{0}', parameters('workloadName')), variables('streamAnalyticsOutputName'))]",
+              "properties": {
+                "datasource": {
+                  "type": "Microsoft.Sql/Server/Database",
+                  "properties": {
+                    "table": "streamData",
+                    "server": "[parameters('sqlServerName')]",
+                    "database": "[parameters('sqlServerDatabaseName')]",
+                    "authenticationMode": "Msi"
+                  }
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.StreamAnalytics/streamingjobs', format('asa-{0}', parameters('workloadName')))]"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Devices/IotHubs', variables('iotHubName'))]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('workloadName')))]"
+      ]
+    },
+    {
+      "condition": "[parameters('optional')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "deployment-service-bus",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "workloadName": {
+            "value": "[parameters('workloadName')]"
+          },
+          "resourceGroupLocation": {
+            "value": "[variables('resourceGroupLocation')]"
+          },
+          "serviceBusTier": {
+            "value": "[parameters('serviceBusTier')]"
+          },
+          "userAssignedManagedIdentityPrincipalId": {
+            "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('workloadName')))).principalId]"
+          },
+          "iotHubName": {
+            "value": "[variables('iotHubName')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.11.1.770",
+              "templateHash": "4880330798665287037"
+            }
+          },
+          "parameters": {
+            "workloadName": {
+              "type": "string"
+            },
+            "resourceGroupLocation": {
+              "type": "string"
+            },
+            "serviceBusTier": {
+              "type": "string",
+              "defaultValue": "Standard",
+              "allowedValues": [
+                "Basic",
+                "Standard",
+                "Premium"
+              ]
+            },
+            "userAssignedManagedIdentityPrincipalId": {
+              "type": "string"
+            },
+            "iotHubName": {
+              "type": "string"
+            }
+          },
+          "variables": {
+            "roleDefinitionIdServiceBusDataSender": "[resourceId('Microsoft.Authorization/roleDefinitions', '69a216fc-b8fb-44d8-bc22-1f3c2cd27a39')]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ServiceBus/namespaces",
+              "apiVersion": "2022-01-01-preview",
+              "name": "[format('sb-{0}', parameters('workloadName'))]",
+              "location": "[parameters('resourceGroupLocation')]",
+              "sku": {
+                "name": "[parameters('serviceBusTier')]"
+              },
+              "properties": {
+                "zoneRedundant": false
+              }
+            },
+            {
+              "type": "Microsoft.ServiceBus/namespaces/topics",
+              "apiVersion": "2022-01-01-preview",
+              "name": "[format('{0}/{1}', format('sb-{0}', parameters('workloadName')), 'fromiothub')]",
+              "properties": {
+                "enableBatchedOperations": true
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', format('sb-{0}', parameters('workloadName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.ServiceBus/namespaces/{0}', format('sb-{0}', parameters('workloadName')))]",
+              "name": "[guid(resourceId('Microsoft.ServiceBus/namespaces', format('sb-{0}', parameters('workloadName'))), variables('roleDefinitionIdServiceBusDataSender'), resourceId('Microsoft.Devices/IotHubs', parameters('iotHubName')))]",
+              "properties": {
+                "roleDefinitionId": "[variables('roleDefinitionIdServiceBusDataSender')]",
+                "principalId": "[parameters('userAssignedManagedIdentityPrincipalId')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', format('sb-{0}', parameters('workloadName')))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "serviceBusName": {
+              "type": "string",
+              "value": "[format('sb-{0}', parameters('workloadName'))]"
+            },
+            "serviceBusTopicName": {
+              "type": "string",
+              "value": "fromiothub"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('workloadName')))]"
+      ]
+    }
+  ]
+}
