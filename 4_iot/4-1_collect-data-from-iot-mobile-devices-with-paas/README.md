@@ -15,7 +15,6 @@ IoT デバイスからの テレメトリーを Azure IoT Hub で受けて保存
 - Azure IoT Hub
 - Azure Storage Account
 - Azure App Service (Web app)
-- Azure Device Provisioning Service (DSP)
 - Azure Stream Analytics
 - Azure SQL Database
 - Azure Service Bus
@@ -23,13 +22,15 @@ IoT デバイスからの テレメトリーを Azure IoT Hub で受けて保存
 
 <img src="./docs/images/generated-structure-by-arm.png" width="80%" alt="構成図">
 
-Azure Device Provisioning Service (DSP) は、Azure IoT Hub とリンクが済んだ状態で配置されます。
-
 Azure IoT Hub のルーティングは、以下のように構成しています。
 
 - 組み込みのエンドポイントへのルーティング
 - Azure Storage Account へのルーティング
 - (Optional) Azure Service Bus Topic へのルーティング
+
+なお、本構成には、Azure Device Provisioning Service (DSP) は含まれておりません。Azure ポータルより作成してください。
+
+- [クイックスタート - Azure portal で IoT Hub Device Provisioning Service を設定する | Microsoft Learn](https://learn.microsoft.com/ja-jp/azure/iot-dps/quick-setup-auto-provision)
 
 
 ## 利用方法
