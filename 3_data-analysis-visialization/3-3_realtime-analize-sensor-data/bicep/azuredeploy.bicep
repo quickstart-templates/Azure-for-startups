@@ -5,7 +5,7 @@ param workloadName string
 @allowed(['F1', 'B1', 'B2', 'B3', 'S1', 'S2', 'S3'])
 param iotHubSkuCode string = 'F1'
 
-@description('Azure Stream Analytics 用の Azure Storage Account の SKU を選択してください')
+@description('Azure Stream Analytics 用の Azure Storage Account の SKU を選択してください。なお、Standard レベルのみサポートされています。')
 @allowed(['Standard_GRS', 'Standard_GZRS', 'Standard_LRS', 'Standard_RAGRS', 'Standard_RAGZRS', 'Standard_ZRS'])
 param storageAccountSkuCodeStreamAnalytics string = 'Standard_LRS'
 

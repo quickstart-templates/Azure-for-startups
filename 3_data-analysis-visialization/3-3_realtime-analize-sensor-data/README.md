@@ -34,7 +34,7 @@ Power BI のデータソースとの接続については、こちらをご参�
 
 下記の「Deploy to Azure」ボタンから開くと、Azure ポータルのデプロイ用のパラメータ入力画面に遷移します。
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fquickstart-templates%2FAzure-for-startups%2Fmain%2F4_iot%2F4-1_collect-data-from-iot-mobile-devices-with-paas%2Fazuredeploy.json)
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fquickstart-templates%2FAzure-for-startups%2Fmain%2F3_data-analysis-visialization%2F3-3_realtime-analize-sensor-data%2Fazuredeploy.json)
 
 各入力欄に適宜入力し、「Review + create」ボタンを選択します。パラメータの検証が正常に完了したら、「Create」ボタンを選択してデプロイを実行します。
 
@@ -48,12 +48,16 @@ Power BI のデータソースとの接続については、こちらをご参�
 | Instance details | |
 | Region | 利用するリージョンを選択 |
 | Workload Name | リソース名に付与する識別用の文字列（プロジェクト名など）を入力 |
-| Iot Hub Sku Code | Azure IoT Hub のプランを選択してください |
-| Storage Account Sku Code Stream Analytics | Azure Stream Analytics 用の Azure Storage Account の SKU を選択してください |
-| Storage Account Sku Code Synapse | Azure Synapse Analytics 用の Azure Storage Account の SKU を選択してください |
-| Sql Database Collation | Azure SQL Database の照合順序を選択（※1） |
+| Iot Hub Sku Code | Azure IoT Hub のプランを選択 |
+| Storage Account Sku Code Stream Analytics | Azure Stream Analytics 用の Azure Storage Account の SKU を選択（※1） |
+| Storage Account Sku Code Synapse | Azure Synapse Analytics 用の Azure Storage Account の SKU を選択 |
+| Sql Database Collation | Azure SQL Database の照合順序を選択（※2） |
 
-※1 Azure SQL Server の照合順序については、こちらをご参照ください。
+※1 Azure Stream Analytics 用の Storage Account は、Azure Synapse Analytics への出力を利用する際に必要で、サポートされる SKU は Standard レベルのみです。詳しくは、こちらをご参照ください。
+
+- [Azure Stream Analytics からの Azure Synapse Analytics 出力 | Microsoft Learn](https://learn.microsoft.com/ja-jp/azure/stream-analytics/azure-synapse-analytics-output)
+
+※2 Azure SQL Server の照合順序については、こちらをご参照ください。
 
 - [照合順序と Unicode のサポート - SQL Server | Microsoft Docs](https://docs.microsoft.com/ja-jp/sql/relational-databases/collations/collation-and-unicode-support?view=sql-server-ver16)
 
